@@ -332,3 +332,64 @@
 需要说明：
 
 - `XGBoost / LightGBM / HGBT` 这些树模型仍主要走 CPU，不属于环境异常。
+
+---
+
+## 9. 本地 4060 负责开发，服务器 GPU 负责整套实验
+
+### 问题
+
+虽然本地已经可以使用 GPU，但长时间批量实验仍有两个问题：
+
+- `BiAT-FTTransformer` 需要逐种子串行跑，多数据集时总时长很长
+- 本地机器还承担开发、写作、绘图，不适合持续被实验占满
+
+### 判断
+
+最合理的分工是：
+
+- 本地 `4060`
+  - 开发
+  - 冒烟测试
+  - 快速超参数验证
+- 组里服务器 GPU（当前已确认可用 `Tesla V100-PCIE-32GB`）
+  - 多种子正式实验
+  - 更长训练轮次
+  - 批量评测
+  - 最终结果打包回传
+
+### 优化思路
+
+把服务器流程标准化，避免每次手工敲命令：
+
+- 同步代码和数据到服务器
+- 服务器端批量运行
+- 服务器端统一打包结果
+- 本地统一拉回结果归档
+
+### 已实施
+
+新增脚本：
+
+- `scripts/sync_project_to_server.sh`
+- `scripts/run_server_suite.sh`
+- `scripts/package_server_results.sh`
+- `scripts/fetch_server_results.sh`
+- `scripts/Sync-ProjectToServer.ps1`
+- `scripts/Run-ServerSuite.ps1`
+- `scripts/Package-ServerResults.ps1`
+- `scripts/Fetch-ServerResults.ps1`
+
+并更新文档：
+
+- `docs/server_conda_setup.md`
+- `docs/project_structure_overview.md`
+
+### 结果
+
+实验链路现在可以明确分成两层：
+
+- 本地负责改代码和小规模验证
+- 服务器负责整套论文实验
+
+这样更符合后续冲 `CCF-A` 的节奏，也便于最后统一汇总。

@@ -12,7 +12,7 @@
 ## 1. 项目根目录
 
 ```text
-小论文 - 副本/
+spaper_zj/
 ├─ .agent/
 ├─ .vscode/
 ├─ data/
@@ -123,10 +123,13 @@ data/
 ```text
 docs/
 ├─ cic_ids2017_setup.md
+├─ ciciot2023_setup.md
 ├─ config_usage.md
 ├─ experiment_writing_log_2026-03-08.md
+├─ optimization_decision_log.md
 ├─ proposal_extracted.txt
 ├─ round3_submission_notes.md
+├─ server_conda_setup.md
 ├─ submission_status_2026-03-08.md
 ├─ training_outputs.md
 └─ unsw_nb15_setup.md
@@ -144,11 +147,23 @@ docs/
   - 当前最详细的中文工作记录。
   - 记录了修复内容、训练命令、实验结果、结论和后续建议。
 
+- `optimization_decision_log.md`
+  - 关键问题与优化决策记录。
+  - 重点保留“为什么改路线、为什么这样调实验、为什么上服务器”的判断过程。
+
 - `proposal_extracted.txt`
   - 从其他材料中抽取出的文本，通常用于参考提案或早期写作素材。
 
 - `round3_submission_notes.md`
   - 第三轮整理出的投稿方向、相关论文、数据集和基线建议文档。
+
+- `server_conda_setup.md`
+  - 服务器实验文档。
+  - 当前已经覆盖：
+    - conda 环境创建
+    - 代码与数据同步
+    - 批量运行脚本
+    - 结果打包与拉回
 
 - `submission_status_2026-03-08.md`
   - 当前投稿状态简表。
@@ -252,17 +267,27 @@ latex_source/
 scripts/
 ├─ batch_evaluate_ablation.py
 ├─ download_cic_ids2017.py
+├─ download_ciciot2023_full.py
+├─ download_ciciot2023_sample.py
 ├─ evaluate_ablation.py
 ├─ evaluate_ablation_simple.py
 ├─ evaluate_adversarial_robustness.py
 ├─ evaluate_fpr_optimization.py
 ├─ evaluate_main_results.py
+├─ Fetch-ServerResults.ps1
+├─ fetch_server_results.sh
 ├─ generate_analysis.py
+├─ Package-ServerResults.ps1
+├─ package_server_results.sh
 ├─ plot_ablation.py
 ├─ plot_all_figures.py
 ├─ plot_main_results.py
 ├─ plot_robustness.py
 ├─ plotting_utils.py
+├─ Run-ServerSuite.ps1
+├─ Sync-ProjectToServer.ps1
+├─ run_server_suite.sh
+├─ sync_project_to_server.sh
 ├─ organize_outputs.py
 ├─ train_all_models.py
 ├─ ORGANIZE_OUTPUTS.md
@@ -282,6 +307,8 @@ scripts/
     - `HGBT-IDS`
     - `XGBoost-IDS`
     - `LightGBM-IDS`
+    - `BiAT-MLP`
+    - `BiAT-FTTransformer`
 
 - `evaluate_ablation.py`
   - 消融实验评测脚本。
@@ -326,6 +353,36 @@ scripts/
 
 - `train_all_models.py`
   - 统一训练入口脚本，可按数据集批量训练各模型。
+
+- `run_server_suite.sh`
+  - 服务器批量实验总入口。
+  - 负责按数据集和模型批量执行整套核心实验、汇总结果并生成图。
+
+- `Run-ServerSuite.ps1`
+  - Windows 服务器版批量实验总入口。
+  - 当前默认推荐在你们组的 Windows + conda + GPU 服务器上使用。
+
+- `sync_project_to_server.sh`
+  - 本地同步脚本。
+  - 用于把代码和 `data/` 同步到服务器目录。
+
+- `Sync-ProjectToServer.ps1`
+  - Windows 本地到 Windows 服务器的同步脚本。
+  - 通过 `scp` 上传项目压缩包和可选的数据压缩包。
+
+- `package_server_results.sh`
+  - 服务器端打包脚本。
+  - 会把结果、模型、图和日志统一压缩成一个归档文件。
+
+- `Package-ServerResults.ps1`
+  - Windows 服务器端结果打包脚本。
+  - 使用 `Compress-Archive` 生成 `.zip` 归档。
+
+- `fetch_server_results.sh`
+  - 本地拉回服务器归档的脚本。
+
+- `Fetch-ServerResults.ps1`
+  - Windows 本地从服务器拉回结果归档的脚本。
 
 - `ORGANIZE_OUTPUTS.md`
   - `outputs/` 整理说明文档。
