@@ -49,14 +49,14 @@ function Resolve-CondaPython {
 function Invoke-Python {
     param(
         [string]$PythonExe,
-        [string[]]$Args
+        [string[]]$CmdArgs
     )
 
-    Write-RunLog ("RUN: {0} {1}" -f $PythonExe, ($Args -join " "))
+    Write-RunLog ("RUN: {0} {1}" -f $PythonExe, ($CmdArgs -join " "))
 
     $psi = New-Object System.Diagnostics.ProcessStartInfo
     $psi.FileName = $PythonExe
-    foreach ($arg in $Args) {
+    foreach ($arg in $CmdArgs) {
         [void]$psi.ArgumentList.Add($arg)
     }
     $psi.RedirectStandardOutput = $true
@@ -79,7 +79,7 @@ function Invoke-Python {
         $stderr.TrimEnd("`r", "`n") | Tee-Object -FilePath $RunLog -Append
     }
     if ($process.ExitCode -ne 0) {
-        throw "Command failed with exit code $($process.ExitCode): $PythonExe $($Args -join ' ')"
+        throw "Command failed with exit code $($process.ExitCode): $PythonExe $($CmdArgs -join ' ')"
     }
 }
 
@@ -101,8 +101,8 @@ function Record-Env {
     Write-RunLog "Repository: $RootDir"
     Write-RunLog "Suite: $Suite"
     Write-RunLog ("Seeds: {0}" -f ($Seeds -join ", "))
-    Invoke-Python -PythonExe $PythonExe -Args @("--version")
-    Invoke-Python -PythonExe $PythonExe -Args @("-c", "import torch; print('torch', torch.__version__); print('cuda', torch.cuda.is_available()); print('device', torch.cuda.get_device_name(0) if torch.cuda.is_available() else 'cpu')")
+    Invoke-Python -PythonExe $PythonExe -CmdArgs @("--version")
+    Invoke-Python -PythonExe $PythonExe -CmdArgs @("-c", "import torch; print('torch', torch.__version__); print('cuda', torch.cuda.is_available()); print('device', torch.cuda.get_device_name(0) if torch.cuda.is_available() else 'cpu')")
     if (Get-Command nvidia-smi.exe -ErrorAction SilentlyContinue) {
         Write-RunLog "RUN: nvidia-smi.exe"
         & nvidia-smi.exe 2>&1 | Tee-Object -FilePath $RunLog -Append
@@ -115,16 +115,16 @@ function Record-Env {
 function Run-TreeModels {
     param([string]$PythonExe, [string]$Dataset)
     foreach ($Seed in $Seeds) {
-        Invoke-Python $PythonExe @("src/baselines/hgbt_ids.py", "--dataset", $Dataset, "--seed", "$Seed")
-        Invoke-Python $PythonExe @("src/baselines/xgboost_ids.py", "--dataset", $Dataset, "--seed", "$Seed")
-        Invoke-Python $PythonExe @("src/baselines/lightgbm_ids.py", "--dataset", $Dataset, "--seed", "$Seed")
+        Invoke-Python -PythonExe $PythonExe -CmdArgs @("src/baselines/hgbt_ids.py", "--dataset", $Dataset, "--seed", "$Seed")
+        Invoke-Python -PythonExe $PythonExe -CmdArgs @("src/baselines/xgboost_ids.py", "--dataset", $Dataset, "--seed", "$Seed")
+        Invoke-Python -PythonExe $PythonExe -CmdArgs @("src/baselines/lightgbm_ids.py", "--dataset", $Dataset, "--seed", "$Seed")
     }
 }
 
 function Run-LstmModels {
     param([string]$PythonExe, [string]$Dataset, [int]$Epochs)
     foreach ($Seed in $Seeds) {
-        Invoke-Python $PythonExe @("src/baselines/lstm_ids.py", "--dataset", $Dataset, "--seed", "$Seed", "--epochs", "$Epochs")
+        Invoke-Python -PythonExe $PythonExe -CmdArgs @("src/baselines/lstm_ids.py", "--dataset", $Dataset, "--seed", "$Seed", "--epochs", "$Epochs")
     }
 }
 
@@ -140,7 +140,7 @@ function Run-BiatMlp {
         [int]$BatchSize = 512
     )
     foreach ($Seed in $Seeds) {
-        Invoke-Python $PythonExe @(
+        Invoke-Python -PythonExe $PythonExe -CmdArgs @(
             "src/baselines/bilevel_supervised_ids.py",
             "--dataset", $Dataset,
             "--seed", "$Seed",
@@ -166,7 +166,7 @@ function Run-BiatFt {
         [int]$BatchSize = 512
     )
     foreach ($Seed in $Seeds) {
-        Invoke-Python $PythonExe @(
+        Invoke-Python -PythonExe $PythonExe -CmdArgs @(
             "src/baselines/bilevel_fttransformer_ids.py",
             "--dataset", $Dataset,
             "--seed", "$Seed",
@@ -187,7 +187,7 @@ function Run-CoreSuite {
     Run-LstmModels -PythonExe $PythonExe -Dataset "unsw-nb15" -Epochs 20
     Run-BiatMlp -PythonExe $PythonExe -Dataset "unsw-nb15" -Epochs 8 -Epsilon 0.02 -Alpha 0.005 -Steps 2 -AdvWeight 0.6
     Run-BiatFt -PythonExe $PythonExe -Dataset "unsw-nb15" -Epochs 8 -Epsilon 0.02 -Alpha 0.005 -Steps 2 -AdvWeight 0.6
-    Invoke-Python $PythonExe @("scripts/evaluate_main_results.py", "--dataset", "unsw-nb15")
+    Invoke-Python -PythonExe $PythonExe -CmdArgs @("scripts/evaluate_main_results.py", "--dataset", "unsw-nb15")
 
     Write-RunLog "=== Core suite: CIC-IDS2017-random ==="
     Run-TreeModels -PythonExe $PythonExe -Dataset "cic-ids2017-random"
@@ -196,16 +196,16 @@ function Run-CoreSuite {
     if (-not $DisableFtCic) {
         Run-BiatFt -PythonExe $PythonExe -Dataset "cic-ids2017-random" -Epochs 8 -Epsilon 0.02 -Alpha 0.005 -Steps 2 -AdvWeight 0.6
     }
-    Invoke-Python $PythonExe @("scripts/evaluate_main_results.py", "--dataset", "cic-ids2017-random")
+    Invoke-Python -PythonExe $PythonExe -CmdArgs @("scripts/evaluate_main_results.py", "--dataset", "cic-ids2017-random")
 }
 
 function Run-SupplementarySuite {
     param([string]$PythonExe)
     Write-RunLog "=== Supplementary suite: CICIoT2023-grouped ==="
-    Invoke-Python $PythonExe @("src/baselines/hgbt_ids.py", "--dataset", "ciciot2023-grouped", "--seed", "42")
-    Invoke-Python $PythonExe @("src/baselines/xgboost_ids.py", "--dataset", "ciciot2023-grouped", "--seed", "42")
-    Invoke-Python $PythonExe @("src/baselines/lightgbm_ids.py", "--dataset", "ciciot2023-grouped", "--seed", "42")
-    Invoke-Python $PythonExe @(
+    Invoke-Python -PythonExe $PythonExe -CmdArgs @("src/baselines/hgbt_ids.py", "--dataset", "ciciot2023-grouped", "--seed", "42")
+    Invoke-Python -PythonExe $PythonExe -CmdArgs @("src/baselines/xgboost_ids.py", "--dataset", "ciciot2023-grouped", "--seed", "42")
+    Invoke-Python -PythonExe $PythonExe -CmdArgs @("src/baselines/lightgbm_ids.py", "--dataset", "ciciot2023-grouped", "--seed", "42")
+    Invoke-Python -PythonExe $PythonExe -CmdArgs @(
         "src/baselines/bilevel_supervised_ids.py",
         "--dataset", "ciciot2023-grouped",
         "--seed", "42",
@@ -216,7 +216,7 @@ function Run-SupplementarySuite {
         "--steps", "2",
         "--adv_weight", "0.6"
     )
-    Invoke-Python $PythonExe @(
+    Invoke-Python -PythonExe $PythonExe -CmdArgs @(
         "src/baselines/bilevel_fttransformer_ids.py",
         "--dataset", "ciciot2023-grouped",
         "--seed", "42",
@@ -227,21 +227,21 @@ function Run-SupplementarySuite {
         "--steps", "2",
         "--adv_weight", "0.6"
     )
-    Invoke-Python $PythonExe @("scripts/evaluate_main_results.py", "--dataset", "ciciot2023-grouped")
+    Invoke-Python -PythonExe $PythonExe -CmdArgs @("scripts/evaluate_main_results.py", "--dataset", "ciciot2023-grouped")
 }
 
 function Run-LegacyAnalysis {
     param([string]$PythonExe)
     Write-RunLog "=== Legacy support analysis: NSL-KDD ==="
-    Invoke-Python $PythonExe @("scripts/evaluate_main_results.py", "--dataset", "nsl-kdd")
-    Invoke-Python $PythonExe @("scripts/evaluate_ablation.py", "--dataset", "nsl-kdd")
-    Invoke-Python $PythonExe @("scripts/evaluate_adversarial_robustness.py", "--dataset", "nsl-kdd")
+    Invoke-Python -PythonExe $PythonExe -CmdArgs @("scripts/evaluate_main_results.py", "--dataset", "nsl-kdd")
+    Invoke-Python -PythonExe $PythonExe -CmdArgs @("scripts/evaluate_ablation.py", "--dataset", "nsl-kdd")
+    Invoke-Python -PythonExe $PythonExe -CmdArgs @("scripts/evaluate_adversarial_robustness.py", "--dataset", "nsl-kdd")
 }
 
 function Render-Figures {
     param([string]$PythonExe)
     Write-RunLog "=== Rendering figures ==="
-    Invoke-Python $PythonExe @("scripts/plot_all_figures.py")
+    Invoke-Python -PythonExe $PythonExe -CmdArgs @("scripts/plot_all_figures.py")
 }
 
 $PythonExe = Resolve-CondaPython -EnvName $CondaEnv
