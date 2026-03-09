@@ -255,6 +255,39 @@ outputs/logs/server_runs/
 
 ---
 
+## 8.4 双卡并行优化实验
+
+如果服务器上有两张 GPU，并且你要继续优化 `UNSW-NB15` 上的路线 C，推荐使用专门的双卡脚本，而不是重新跑整套 `core`。
+
+脚本：
+
+- [Run-DualGpuOptimization.ps1](/d:/Study/研2/spaper_zj/scripts/Run-DualGpuOptimization.ps1)
+
+推荐命令：
+
+```powershell
+conda activate spaper
+.\scripts\Run-DualGpuOptimization.ps1 -CondaEnv spaper -Model ft -Dataset unsw-nb15 -Epochs 15 -Seeds 42,3407,8888,123 -GpuIds 0,1
+```
+
+说明：
+
+- `-Model ft`
+  - 只优化 `BiAT-FTTransformer`
+- `-Model mlp`
+  - 只优化 `BiAT-MLP`
+- `-Model both`
+  - 两个路线 C 模型都跑
+
+这个脚本的策略不是单模型多卡，而是：
+
+- `GPU 0` 跑一部分种子
+- `GPU 1` 跑另一部分种子
+
+这比对当前 tabular 模型使用 `DataParallel` 更实用。
+
+---
+
 ## 9. 结果汇总
 
 实验结果主要保存在：

@@ -2,6 +2,11 @@
 
 本文档专门记录项目推进过程中每次遇到关键问题时，我们是如何判断、如何修改、为什么这么修改的。
 
+配套文档：
+
+- [BI_ARL_WORKFLOW.md](/d:/Study/研2/spaper_zj/BI_ARL_WORKFLOW.md)
+  - 记录项目完整流程、当前主线、服务器实验链路和论文产出链路
+
 目的不是记录所有命令，而是保留：
 
 - 问题是什么
@@ -9,6 +14,30 @@
 - 我们的优化思路是什么
 - 修改后带来了什么结果
 - 下一步为什么这样走
+
+---
+
+## 时间线索引
+
+这一节不是详细内容，而是给后续回溯提供一个快速入口。
+
+| 序号 | 主题 | 关键词 |
+|---|---|---|
+| 1 | 旧 RL 主线在现代数据集上失效 | `Bi-ARL`, `NSL-KDD`, `UNSW`, `CIC` |
+| 2 | 路线 C 启动，先做 `BiAT-MLP` | `route C`, `BiAT-MLP` |
+| 3 | `CICIoT2023` 过于容易 | `CICIoT2023`, `grouped`, `too easy` |
+| 4 | 大数据集下载稳健化 | `download`, `resume`, `mirror` |
+| 5 | 论文绘图重叠问题 | `plot`, `layout`, `legend` |
+| 6 | 误差棒去除 | `error bar`, `figure style` |
+| 7 | backbone 升级到 `FT-Transformer` | `FT-Transformer`, `tabular backbone` |
+| 8 | GPU 环境切换到 `spaper` | `cuda`, `torch`, `spaper` |
+| 9 | 本地开发 / 服务器正式实验分工 | `V100`, `server`, `batch run` |
+
+建议用法：
+
+- 想知道“为什么换主线”，先看 `1-2`
+- 想知道“为什么某些数据集不能写成主结果”，看 `3`
+- 想知道“为什么现在主打服务器实验”，看 `8-9`
 
 ---
 
@@ -393,3 +422,101 @@
 - 服务器负责整套论文实验
 
 这样更符合后续冲 `CCF-A` 的节奏，也便于最后统一汇总。
+
+---
+
+## 10. 服务器正式结果确认了 `BiAT-FTTransformer` 是当前最优神经网络主线
+
+### 问题
+
+在本地阶段，`BiAT-FTTransformer` 只完成了部分种子或短程结果，还不能确定它是否真的值得取代 `BiAT-MLP` 成为主方法。
+
+### 判断
+
+需要依赖服务器上的正式多种子结果来回答两个问题：
+
+- 在 `UNSW-NB15` 上，它是否稳定优于 `BiAT-MLP`
+- 在 `CIC-IDS2017-random` 上，它是否至少能维持小幅正收益
+
+### 服务器结果
+
+#### UNSW-NB15
+
+- `BiAT-FTTransformer`
+  - `F1 = 88.24%`
+  - `FPR = 21.11%`
+- `BiAT-MLP`
+  - `F1 = 86.40%`
+  - `FPR = 28.31%`
+- `LSTM-IDS`
+  - `F1 = 87.57%`
+  - `FPR = 30.77%`
+
+#### CIC-IDS2017-random
+
+- `BiAT-FTTransformer`
+  - `F1 = 86.88%`
+  - `FPR = 6.82%`
+- `BiAT-MLP`
+  - `F1 = 86.73%`
+  - `FPR = 7.16%`
+
+### 结论
+
+- `BiAT-FTTransformer` 已经可以正式作为路线 C 的当前主方法
+- 它在 `UNSW-NB15` 上显著优于 `BiAT-MLP`
+- 它在 `CIC-IDS2017-random` 上只有小幅收益，但至少没有退化
+- 它依然落后于 `XGBoost / LightGBM`
+
+### 执行决策
+
+后续论文和文档口径改为：
+
+- 当前最优神经网络方法：`BiAT-FTTransformer`
+- 当前最强整体基线：`LightGBM / XGBoost`
+- 论文不写 SOTA，只写“路线 C 明显优于旧 RL 线，并在 `UNSW-NB15` 上接近强监督神经网络基线”
+
+---
+
+## 11. 双卡并行的价值不在于直接提升指标，而在于加快下一轮优化实验
+
+### 问题
+
+服务器已经确认有两张 `V100`，但当前 `core` 脚本仍然是单卡串行跑：
+
+- 所有 `torch` 模型默认走 `cuda:0`
+- 第二张卡基本闲置
+
+### 判断
+
+双卡并行不会直接提升 `F1 / FPR`，但会明显提升：
+
+- 更长 epoch 实验的吞吐
+- 多种子重训效率
+- 小规模超参数搜索速度
+
+最值得投入的点不是重新跑所有数据集，而是：
+
+- `UNSW-NB15`
+- `BiAT-FTTransformer`
+
+### 优化思路
+
+新增双卡并行脚本：
+
+- `scripts/Run-DualGpuOptimization.ps1`
+
+策略：
+
+- 不做单模型多卡
+- 直接按种子拆分到不同 GPU
+- `GPU 0` / `GPU 1` 并行各跑一部分 seed
+
+### 当前决策
+
+下一轮如果继续做结果提升，优先路线为：
+
+1. `UNSW-NB15`
+2. `BiAT-FTTransformer`
+3. 更长 epoch
+4. 双卡并行

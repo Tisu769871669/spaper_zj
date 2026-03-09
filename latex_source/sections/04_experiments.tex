@@ -4,21 +4,24 @@
 \subsection{Experimental Setup}
 
 \subsubsection{Datasets}
-We evaluate on two public tabular IDS benchmarks.
+We evaluate on three public tabular IDS benchmarks.
 \begin{itemize}
     \item \textbf{NSL-KDD}: \texttt{KDDTrain+} (125,973 records) and \texttt{KDDTest+} (22,544 records), with 41 input features.
     \item \textbf{UNSW-NB15}: official training split (175,341 records) and testing split (82,332 records), with 42 input features after removing identifier and auxiliary columns.
+    \item \textbf{CIC-IDS2017}: a modern flow-based benchmark. We use a random stratified split as the main setting and discuss the stricter day-based split as a supplementary protocol.
 \end{itemize}
 
-NSL-KDD remains useful for controlled ablation, but it is not sufficient as a standalone modern benchmark. We therefore include UNSW-NB15 to partially address the dataset obsolescence and cross-dataset concerns discussed in recent IDS literature \cite{cantone2024crossdataset, datasetreview2025}.
+NSL-KDD remains useful for controlled ablation, but it is not sufficient as a standalone modern benchmark. We therefore center the main modern evaluation on UNSW-NB15 and CIC-IDS2017, following recent concerns on dataset obsolescence and cross-dataset validity in IDS research \cite{cantone2024crossdataset, datasetreview2025}.
 
 \subsubsection{Baselines}
-We compare Bi-ARL with four baselines:
+We compare both the original Bi-ARL line and the refactored route-C detectors against strong tabular baselines:
 \begin{enumerate}
     \item \textbf{Vanilla PPO}: single-agent RL without adversarial training.
     \item \textbf{MARL}: simultaneous attacker-defender updates without bi-level nesting.
     \item \textbf{LSTM-IDS}: a two-layer LSTM supervised baseline.
     \item \textbf{HGBT-IDS}: histogram gradient boosting on tabular features.
+    \item \textbf{XGBoost-IDS} and \textbf{LightGBM-IDS}: modern boosted-tree baselines.
+    \item \textbf{BiAT-MLP} and \textbf{BiAT-FTTransformer}: supervised detectors trained with the same bilevel adversarial training idea used in route C.
 \end{enumerate}
 
 These baselines still do not cover the strongest recent SSL, graph, or transformer IDS families \cite{golchin2024ssclids, xu2024gnnssl, xi2024idsmtran}, but they provide a materially stronger comparison set than the original half-finished repository.
@@ -64,7 +67,7 @@ The NSL-KDD evidence supports a narrow claim: Bi-ARL offers a better precision-r
     \label{fig:main_nsl}
 \end{figure}
 
-Table~\ref{tab:main_results_unsw} presents the more challenging UNSW-NB15 results. Here, the ranking changes substantially. HGBT-IDS and LSTM-IDS are both clearly stronger and more stable than the RL variants. Even after dataset-specific stabilization, Bi-ARL remains highly sensitive to initialization.
+Table~\ref{tab:main_results_unsw} presents the more challenging UNSW-NB15 results. Here, the ranking changes substantially. The original Bi-ARL remains highly unstable, whereas the route-C models are clearly stronger. In particular, BiAT-FTTransformer improves over BiAT-MLP by nearly two F1 points and reduces mean FPR by more than seven points, while still remaining behind the boosted-tree baselines.
 
 \begin{table}[h]
     \centering
@@ -74,22 +77,23 @@ Table~\ref{tab:main_results_unsw} presents the more challenging UNSW-NB15 result
         \hline
         \textbf{Method} & \textbf{Recall} & \textbf{Precision} & \textbf{F1} & \textbf{FPR} \\
         \hline
-        Vanilla PPO & 66.21\% & 58.67\% & 59.42\% & 58.72\% \\
-        MARL & 74.98\% & 68.30\% & 57.26\% & 66.81\% \\
-        LSTM-IDS & 97.85\% & 78.82\% & 87.30\% & 32.26\% \\
-        HGBT-IDS & 98.30\% & \textbf{82.07\%} & \textbf{89.45\%} & \textbf{26.31\%} \\
-        \hline
-        \textbf{Bi-ARL (Ours)} & 66.56\% & 48.80\% & 54.13\% & 53.56\% \\
+        Bi-ARL & 66.56\% & 48.80\% & 54.13\% & 53.56\% \\
+        BiAT-MLP & 93.63\% & 80.21\% & 86.40\% & 28.31\% \\
+        BiAT-FTTransformer & 92.54\% & 84.34\% & 88.24\% & 21.11\% \\
+        LSTM-IDS & \textbf{97.44\%} & 79.53\% & 87.57\% & 30.77\% \\
+        HGBT-IDS & 98.30\% & 82.07\% & 89.45\% & 26.31\% \\
+        XGBoost-IDS & 97.02\% & 86.17\% & 91.27\% & 19.08\% \\
+        LightGBM-IDS & 96.83\% & \textbf{87.38\%} & \textbf{91.86\%} & \textbf{17.14\%} \\
         \hline
     \end{tabular}
 \end{table}
 
-\textbf{Cross-dataset interpretation}: the current Bi-ARL implementation should not be presented as a state-of-the-art IDS. It is competitive only within the RL subset on NSL-KDD, while the UNSW-NB15 experiments show that stronger supervised tabular baselines remain substantially better in both effectiveness and stability.
+\textbf{Cross-dataset interpretation}: the current Bi-ARL implementation should not be presented as a state-of-the-art IDS. The more defensible positive claim is narrower: route C substantially improves over the original RL formulation, and BiAT-FTTransformer becomes the strongest neural detector on UNSW-NB15, but modern boosted-tree baselines remain the strongest overall.
 
 \begin{figure}[t]
     \centering
     \includegraphics[width=\linewidth]{figures/generated/main_results/main_results_unsw_nb15.pdf}
-    \caption{Main-result visualization on UNSW-NB15. The supervised baselines remain clearly ahead of the current RL variants.}
+    \caption{Main-result visualization on UNSW-NB15. Route C substantially narrows the gap, with BiAT-FTTransformer becoming the strongest neural model, although boosted trees still lead overall.}
     \label{fig:main_unsw}
 \end{figure}
 
@@ -104,7 +108,7 @@ Table~\ref{tab:main_results_unsw} presents the more challenging UNSW-NB15 result
 
 We further evaluate on CIC-IDS2017 in two settings. The first is a random stratified split (`cic-ids2017-random`), which is suitable for a conventional supervised-learning main table. The second is a stricter day-based split (`cic-ids2017`), where Monday--Thursday are used for training and Friday is held out for testing; this version is better interpreted as a cross-day generalization stress test.
 
-Table~\ref{tab:cic_random} reports the random-split results. Here, all three tree-based baselines nearly saturate the benchmark, while LSTM-IDS remains slightly weaker but still very strong. Short-run RL smoke tests on the same split are far below this level (Bi-ARL seed42: 36.48\% F1; Vanilla PPO seed42: 33.17\% F1), so we do not treat them as full main-table competitors for this dataset at the current stage.
+Table~\ref{tab:cic_random} reports the random-split results. Here, all three tree-based baselines nearly saturate the benchmark, while LSTM-IDS remains very strong. Route C improves substantially over the old RL line, but the gain from FT-Transformer over BiAT-MLP is small on this dataset, and neither route-C model approaches the boosted-tree baselines.
 
 \begin{table}[h]
     \centering
@@ -114,7 +118,9 @@ Table~\ref{tab:cic_random} reports the random-split results. Here, all three tre
         \hline
         \textbf{Method} & \textbf{Recall} & \textbf{Precision} & \textbf{F1} & \textbf{FPR} \\
         \hline
-        LSTM-IDS & 97.76\% & 92.27\% & 94.93\% & 2.04\% \\
+        BiAT-MLP & 98.65\% & 77.39\% & 86.73\% & 7.16\% \\
+        BiAT-FTTransformer & 97.90\% & 78.10\% & 86.88\% & 6.82\% \\
+        LSTM-IDS & 98.16\% & 92.01\% & 94.98\% & 2.12\% \\
         HGBT-IDS & 99.85\% & 99.63\% & 99.74\% & \textbf{0.09\%} \\
         XGBoost-IDS & \textbf{99.89\%} & 99.59\% & 99.74\% & 0.10\% \\
         LightGBM-IDS & 99.87\% & \textbf{99.62\%} & \textbf{99.75\%} & \textbf{0.09\%} \\
@@ -122,7 +128,7 @@ Table~\ref{tab:cic_random} reports the random-split results. Here, all three tre
     \end{tabular}
 \end{table}
 
-The random-split results are useful because they show that the feature representation itself is highly learnable by modern tabular methods. At the same time, the near-saturated scores also imply that this split is not sufficient by itself to demonstrate robustness or distribution-shift resistance.
+The random-split results are useful because they show that the feature representation itself is highly learnable by modern tabular methods. At the same time, the near-saturated scores imply that this split is not sufficient by itself to demonstrate robustness or distribution-shift resistance. For route C, the main lesson is that replacing MLP with FT-Transformer helps only marginally on this protocol.
 
 \begin{figure}[t]
     \centering
@@ -226,4 +232,4 @@ We evaluate FGSM attacks \cite{goodfellow2014fgsm} on NSL-KDD with perturbation 
 
 \subsection{Discussion}
 
-Taken together, the experiments support a cautious conclusion. Bi-ARL is a meaningful RL formulation for adversarial IDS training and improves over a naive PPO baseline on NSL-KDD. However, the modern-data results reveal substantial instability and a clear gap to strong supervised tabular methods. For submission-quality follow-up work, the most important next step is to stabilize the inner-loop optimization and add at least one more contemporary benchmark such as CIC-IDS2017 or CSE-CIC-IDS2018.
+Taken together, the experiments support a cautious but more constructive conclusion. Bi-ARL is a meaningful RL formulation for adversarial IDS training and improves over a naive PPO baseline on NSL-KDD, but the stronger evidence now comes from route C. BiAT-FTTransformer consistently improves over BiAT-MLP and dramatically outperforms the old RL line on modern data, especially on UNSW-NB15. Even so, strong boosted-tree baselines remain better overall, which means the current contribution is best framed as a bilevel adversarial training framework with a competitive neural backbone rather than as a state-of-the-art IDS.
