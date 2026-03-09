@@ -1,0 +1,77 @@
+"""
+Histogram Gradient Boosting baseline for tabular IDS datasets.
+"""
+
+import argparse
+import json
+import sys
+import os
+from pathlib import Path
+
+import numpy as np
+from sklearn.ensemble import HistGradientBoostingClassifier
+from sklearn.metrics import accuracy_score, f1_score, precision_score, recall_score
+
+current_dir = os.path.dirname(os.path.abspath(__file__))
+project_root = os.path.dirname(os.path.dirname(current_dir))
+if project_root not in sys.path:
+    sys.path.append(project_root)
+
+from src.utils.config import Config
+from src.utils.data_loader import build_data_loader
+
+
+def compute_metrics(y_true, y_pred):
+    return {
+        "Accuracy": accuracy_score(y_true, y_pred),
+        "Recall": recall_score(y_true, y_pred),
+        "Precision": precision_score(y_true, y_pred, zero_division=0),
+        "F1": f1_score(y_true, y_pred, zero_division=0),
+        "FPR": float(np.sum((y_pred == 1) & (y_true == 0)) / np.sum(y_true == 0)),
+    }
+
+
+def main():
+    parser = argparse.ArgumentParser(description="HGBoost IDS baseline")
+    parser.add_argument("--dataset", type=str, default="nsl-kdd", help="Dataset: nsl-kdd / unsw-nb15")
+    parser.add_argument("--seed", type=int, default=42, help="Random seed")
+    args = parser.parse_args()
+
+    Config.configure_dataset(args.dataset)
+    Config.set_seed(args.seed)
+
+    loader = build_data_loader(Config.DATASET_NAME)
+    if not loader.has_real_data():
+        raise FileNotFoundError(
+            f"Dataset files not found for {Config.DATASET_NAME}. "
+            f"Expected: {loader.train_path} and {loader.test_path}"
+        )
+    X_train, y_train = loader.load_data(mode="train")
+    X_test, y_test = loader.load_data(mode="test")
+
+    model = HistGradientBoostingClassifier(
+        learning_rate=0.1,
+        max_depth=8,
+        max_iter=300,
+        random_state=args.seed,
+    )
+    model.fit(X_train, y_train)
+    y_pred = model.predict(X_test)
+    metrics = compute_metrics(y_test, y_pred)
+
+    output = {
+        "dataset": Config.DATASET_NAME,
+        "seed": args.seed,
+        "model": "HistGradientBoosting",
+        **metrics,
+    }
+    print(json.dumps(output, indent=2))
+
+    suffix = Config.DATASET_NAME.replace("-", "_")
+    output_path = Config.RESULTS_DIR / f"hgbt_baseline_{suffix}_seed{args.seed}.json"
+    output_path.write_text(json.dumps(output, indent=2), encoding="utf-8")
+    print(f"Saved baseline result: {output_path}")
+
+
+if __name__ == "__main__":
+    main()

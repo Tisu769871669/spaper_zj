@@ -1,0 +1,109 @@
+\section{Methodology}
+\label{sec:methodology}
+
+This section details the proposed Bi-level Adversarial Reinforcement Learning (Bi-ARL) framework. We first formalize the network threat detection problem as a Stackelberg game, then describe the bi-level optimization algorithm with PPO-based policy updates.
+
+\subsection{Problem Formulation}
+Consider a network environment with state space $\mathcal{S}$ representing tabular traffic-flow features. In our implementation, the state dimensionality depends on the dataset profile (e.g., 41 for NSL-KDD, 42 for UNSW-NB15, and 78 for CIC-IDS2017 after preprocessing). The interaction involves two agents: an Attacker ($\mathcal{A}$) and a Defender ($\mathcal{D}$).
+
+Let $s_t \in \mathcal{S}$ denote the state at time $t$. The Attacker selects action $a^{\mathcal{A}}_t \in \mathcal{A}^{{\mathcal{A}}}$ (perturbation strategies), and the Defender selects $a^{\mathcal{D}}_t \in \mathcal{A}^{{\mathcal{D}}}$ (classification decision).
+
+We model the problem as a \textbf{Stackelberg game}:
+
+\begin{equation}
+    \max_{\theta_{\mathcal{D}}} J(\theta_{\mathcal{D}}, \theta_{\mathcal{A}}^*) = \mathbb{E}_{\tau \sim \pi_{\mathcal{D}}, \pi_{\mathcal{A}}^*} \left[ \sum_{t=0}^{T} \gamma^t R_{\mathcal{D}}(s_t, a^{\mathcal{D}}_t, a^{\mathcal{A}*}_t) \right]
+\end{equation}
+\begin{equation}
+    \text{s.t.} \quad \theta_{\mathcal{A}}^* = \arg\max_{\theta_{\mathcal{A}}} \mathbb{E}_{\tau \sim \pi_{\mathcal{A}}} \left[ \sum_{t=0}^{T} \gamma^t R_{\mathcal{A}}(s_t, a^{\mathcal{D}}_t, a^{\mathcal{A}}_t) \right]
+\end{equation}
+
+where $\gamma=0.99$ is the discount factor, and $\tau$ denotes a trajectory.
+
+\subsection{Reward Functions}
+
+\subsubsection{Attacker Reward}
+The Attacker aims to maximize evasion success:
+\begin{equation}
+    \label{eq:attacker_reward}
+    R_{\mathcal{A}} = \begin{cases}
+        +2.0 & \text{if FN (attack evades detection)} \\
+        -1.0 & \text{if TP (attack detected)}
+    \end{cases}
+\end{equation}
+
+\subsubsection{Defender Reward}
+The Defender prioritizes detecting attacks while minimizing false alarms:
+\begin{equation}
+    \label{eq:defender_reward}
+    R_{\mathcal{D}} = \begin{cases}
+        +1.0 & \text{if TP (correct detection)} \\
+        +0.5 & \text{if TN (correct rejection)} \\
+        -1.0 & \text{if FP (false alarm)}       \\
+        -2.0 & \text{if FN (missed attack)}
+    \end{cases}
+\end{equation}
+
+In the codebase, these rewards are implemented through dataset-specific profiles. The NSL-KDD setting uses the values above directly, while UNSW-NB15 and CIC-IDS2017 use slightly stronger false-positive penalties to reduce immediate policy collapse under higher class imbalance and harder generalization settings. The common design principle is unchanged: false negatives are penalized more heavily than true negatives are rewarded, and false positives incur a meaningful deployment cost.
+
+\subsection{PPO-Based Policy Optimization}
+
+Both agents use Proximal Policy Optimization (PPO) \cite{schulman2017ppo}. Given policy $\pi_\theta(a|s)$, PPO maximizes the clipped surrogate objective:
+
+\begin{equation}
+    \label{eq:ppo_objective}
+    L^{CLIP}(\theta) = \mathbb{E}_t \left[ \min \left( r_t(\theta) \hat{A}_t, \text{clip}(r_t(\theta), 1-\epsilon, 1+\epsilon) \hat{A}_t \right) \right]
+\end{equation}
+
+where $r_t(\theta) = \frac{\pi_\theta(a_t|s_t)}{\pi_{\theta_{\text{old}}}(a_t|s_t)}$ is the probability ratio, $\hat{A}_t$ is the advantage estimate, and $\epsilon=0.2$ is the clipping parameter. The advantage is computed via Generalized Advantage Estimation (GAE) \cite{schulman2015gae}:
+
+\begin{equation}
+    \hat{A}_t = \sum_{l=0}^{\infty} (\gamma \lambda)^l \delta_{t+l}, \quad \delta_t = r_t + \gamma V(s_{t+1}) - V(s_t)
+\end{equation}
+
+with $\lambda=0.95$ for bias-variance trade-off.
+
+\subsection{Bi-level Optimization Algorithm}
+
+\subsubsection{Inner Loop: Attacker Convergence}
+The Attacker optimizes against a \textbf{fixed} Defender policy $\pi_{\mathcal{D}}^{\text{fixed}}$ until convergence. Convergence is measured by KL divergence:
+
+\begin{equation}
+    \label{eq:kl_divergence}
+    D_{KL}(\pi_{\mathcal{A}}^{\text{old}} \| \pi_{\mathcal{A}}^{\text{new}}) = \mathbb{E}_{s,a} \left[ \log \frac{\pi_{\mathcal{A}}^{\text{old}}(a|s)}{\pi_{\mathcal{A}}^{\text{new}}(a|s)} \right] < \tau_{KL}
+\end{equation}
+
+where $\tau_{KL}=0.01$. The Inner Loop terminates when $D_{KL} < \tau_{KL}$ or after $K_{\text{inner}}$ steps. In the reproduced experiments, $K_{\text{inner}}=5$ for NSL-KDD and $K_{\text{inner}}=1$ for the harder modern datasets, reflecting a practical stabilization choice rather than a theoretically ideal setting.
+
+\subsubsection{Outer Loop: Defender Robustification}
+Once the Attacker converges to $\theta_{\mathcal{A}}^*$, the Defender updates against this worst-case adversary. The Attacker remains in \texttt{eval()} mode with frozen gradients during this phase.
+
+\begin{algorithm}[h]
+    \caption{Bi-level Adversarial RL (Bi-ARL)}
+    \label{alg:biarl}
+    \begin{algorithmic}[1]
+        \STATE \textbf{Input:} Episodes $N$, inner steps $K_{\text{inner}}$, KL threshold $\tau_{KL}$
+        \STATE Initialize $\theta_{\mathcal{D}}, \theta_{\mathcal{A}}$ randomly
+        \FOR{episode $e = 1$ to $N$}
+        \STATE // \textbf{Inner Loop: Attacker Best-Response}
+        \STATE $\theta_{\mathcal{A}}^{\text{old}} \leftarrow \theta_{\mathcal{A}}$
+        \FOR{$k = 1$ to $K_{\text{inner}}$}
+        \STATE Collect trajectories $\tau \sim \pi_{\mathcal{A}}(\cdot|\theta_{\mathcal{A}}), \pi_{\mathcal{D}}^{\text{fixed}}$
+        \STATE Update $\theta_{\mathcal{A}} \leftarrow \theta_{\mathcal{A}} + \alpha \nabla_{\theta_{\mathcal{A}}} L^{CLIP}(\theta_{\mathcal{A}})$
+        \STATE Compute $D_{KL}(\pi_{\mathcal{A}}^{\text{old}} \| \pi_{\mathcal{A}})$
+        \IF{$D_{KL} < \tau_{KL}$}
+        \STATE \textbf{break} \Comment{Attacker converged}
+        \ENDIF
+        \ENDFOR
+        \STATE $\theta_{\mathcal{A}}^* \leftarrow \theta_{\mathcal{A}}$ \Comment{Freeze optimal Attacker}
+        \STATE
+        \STATE // \textbf{Outer Loop: Defender Robustification}
+        \STATE Collect trajectories $\tau \sim \pi_{\mathcal{A}}^*(\cdot|\theta_{\mathcal{A}}^*), \pi_{\mathcal{D}}(\cdot|\theta_{\mathcal{D}})$
+        \STATE Update $\theta_{\mathcal{D}} \leftarrow \theta_{\mathcal{D}} + \beta \nabla_{\theta_{\mathcal{D}}} L^{CLIP}(\theta_{\mathcal{D}})$
+        \ENDFOR
+        \STATE \textbf{Return:} Defender policy $\pi_{\mathcal{D}}(\cdot|\theta_{\mathcal{D}})$
+    \end{algorithmic}
+\end{algorithm}
+
+\subsection{Theoretical Justification}
+Our bi-level structure approximates a Stackelberg equilibrium, where the Defender's strategy is optimized against a stronger attacker response than in standard simultaneous-update MARL. In principle, this provides a more robust training objective than ordinary co-adaptation. In practice, however, the empirical sections show that convergence of the inner problem remains imperfect on harder datasets, so the current work should be interpreted as an operational approximation to Stackelberg-style robust training rather than a proof of worst-case security guarantees.
+

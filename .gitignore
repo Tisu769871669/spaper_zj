@@ -1,0 +1,46 @@
+# OS / editor
+.DS_Store
+Thumbs.db
+.vscode/
+.agent/
+
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+.pytest_cache/
+.mypy_cache/
+
+# Environments
+.venv/
+venv/
+env/
+
+# Data and experiment artifacts
+data/
+outputs/
+runs/
+
+# Local temp / checkpoints
+*.pth
+*.pt
+*.ckpt
+*.jsonl
+
+# LaTeX build artifacts
+latex_source/*.aux
+latex_source/*.bbl
+latex_source/*.bcf
+latex_source/*.blg
+latex_source/*.fdb_latexmk
+latex_source/*.fls
+latex_source/*.log
+latex_source/*.out
+latex_source/*.run.xml
+latex_source/*.synctex.gz
+latex_source/out/
+
+# Generated figures copied from scripts
+latex_source/figures/generated/
+

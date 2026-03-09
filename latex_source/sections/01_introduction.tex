@@ -1,0 +1,16 @@
+\section{Introduction}
+\label{sec:introduction}
+
+Network security remains a central challenge for modern computing systems. Traditional intrusion detection systems (IDS) rely heavily on signatures or static statistical rules, which limits their ability to cope with zero-day attacks, distribution shift, and adversarial manipulation \cite{liao2024survey, moustafa2023explainable, wang2023robustnessnids}. Recent learning-based IDS research has therefore moved toward self-supervised generalization \cite{golchin2024ssclids, xu2024gnnssl}, open-set recognition \cite{qiu2024vaemax}, and transformer-based feature modeling \cite{xi2024idsmtran}. At the same time, recent evidence shows that strong in-distribution benchmark results can degrade sharply under cross-dataset testing or stronger perturbations \cite{cantone2024crossdataset, wang2023robustnessnids}. Reinforcement learning (RL) offers a natural route toward adaptive defense, but many existing RL-based IDS pipelines still train against either static disturbances or simultaneously updated opponents, without explicitly approximating an attacker's best response.
+
+This paper proposes a \textbf{Bi-level Adversarial Reinforcement Learning (Bi-ARL)} framework to address this gap. Unlike standard multi-agent RL, where both agents are optimized simultaneously, our approach models the interaction as a \textbf{Stackelberg game}: the defender acts as the leader and is updated against an attacker that is repeatedly adapted toward a stronger response. The purpose is not to claim a solved robust IDS, but to test whether explicit leader-follower optimization yields a better detection trade-off than ordinary RL baselines.
+
+\subsection{Contributions}
+Our main contributions are:
+\begin{enumerate}
+    \item We formulate IDS training as a bi-level attacker-defender optimization problem and implement a practical PPO-based Bi-ARL pipeline for tabular network-flow benchmarks.
+    \item We show on NSL-KDD that Bi-ARL achieves the best mean F1 score among the RL baselines while substantially reducing FPR relative to vanilla PPO.
+    \item We extend the evaluation to UNSW-NB15 and CIC-IDS2017, where the results reveal a clear gap between the current RL formulation and strong supervised tabular baselines such as HGBT-IDS, XGBoost-IDS, LightGBM-IDS, and LSTM-IDS.
+    \item We provide a deliberately conservative empirical analysis: the proposed method is useful as an RL research prototype, but its robustness and cross-dataset stability remain limited, which identifies concrete priorities for the next iteration of the work.
+\end{enumerate}
+

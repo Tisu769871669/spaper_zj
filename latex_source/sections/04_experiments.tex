@@ -1,0 +1,229 @@
+\section{Experiments}
+\label{sec:experiments}
+
+\subsection{Experimental Setup}
+
+\subsubsection{Datasets}
+We evaluate on two public tabular IDS benchmarks.
+\begin{itemize}
+    \item \textbf{NSL-KDD}: \texttt{KDDTrain+} (125,973 records) and \texttt{KDDTest+} (22,544 records), with 41 input features.
+    \item \textbf{UNSW-NB15}: official training split (175,341 records) and testing split (82,332 records), with 42 input features after removing identifier and auxiliary columns.
+\end{itemize}
+
+NSL-KDD remains useful for controlled ablation, but it is not sufficient as a standalone modern benchmark. We therefore include UNSW-NB15 to partially address the dataset obsolescence and cross-dataset concerns discussed in recent IDS literature \cite{cantone2024crossdataset, datasetreview2025}.
+
+\subsubsection{Baselines}
+We compare Bi-ARL with four baselines:
+\begin{enumerate}
+    \item \textbf{Vanilla PPO}: single-agent RL without adversarial training.
+    \item \textbf{MARL}: simultaneous attacker-defender updates without bi-level nesting.
+    \item \textbf{LSTM-IDS}: a two-layer LSTM supervised baseline.
+    \item \textbf{HGBT-IDS}: histogram gradient boosting on tabular features.
+\end{enumerate}
+
+These baselines still do not cover the strongest recent SSL, graph, or transformer IDS families \cite{golchin2024ssclids, xu2024gnnssl, xi2024idsmtran}, but they provide a materially stronger comparison set than the original half-finished repository.
+
+\subsubsection{Training Details}
+Unless otherwise noted, we report means over four random seeds (42, 123, 3407, 8888). NSL-KDD experiments use 100 RL episodes. For UNSW-NB15, we reduce the attacker perturbation magnitude and use a shorter bi-level inner loop in order to avoid immediate policy collapse during training; specifically, Bi-ARL uses one inner attacker update per outer step on UNSW-NB15, whereas the NSL-KDD setting uses five. LSTM-IDS is trained for 20 epochs, and HGBT-IDS uses a depth-8 histogram gradient boosting classifier with 300 boosting iterations.
+
+\subsection{Evaluation Metrics}
+\begin{itemize}
+    \item \textbf{Recall}: $TP / (TP + FN)$.
+    \item \textbf{Precision}: $TP / (TP + FP)$.
+    \item \textbf{F1-score}: harmonic mean of Precision and Recall.
+    \item \textbf{False Positive Rate (FPR)}: $FP / (FP + TN)$.
+\end{itemize}
+
+\subsection{Main Results}
+
+Table~\ref{tab:main_results_nsl} reports the NSL-KDD results. Bi-ARL achieves the best mean F1 among the RL methods and clearly improves over vanilla PPO on FPR.
+
+\begin{table}[h]
+    \centering
+    \caption{NSL-KDD Main Results (Mean across 4 seeds)}
+    \label{tab:main_results_nsl}
+    \begin{tabular}{lcccc}
+        \hline
+        \textbf{Method} & \textbf{Recall} & \textbf{Precision} & \textbf{F1} & \textbf{FPR} \\
+        \hline
+        Vanilla PPO & \textbf{76.39\%} & 79.75\% & 74.12\% & 39.57\% \\
+        MARL & 70.97\% & 91.65\% & 79.32\% & 9.54\% \\
+        LSTM-IDS & 65.05\% & \textbf{96.73\%} & 77.78\% & \textbf{2.91\%} \\
+        \hline
+        \textbf{Bi-ARL (Ours)} & 72.38\% & 90.56\% & \textbf{80.17\%} & 10.41\% \\
+        \hline
+    \end{tabular}
+\end{table}
+
+The NSL-KDD evidence supports a narrow claim: Bi-ARL offers a better precision-recall balance than vanilla PPO and slightly outperforms MARL on mean F1, but it does not dominate the supervised baseline on FPR.
+
+\begin{figure}[t]
+    \centering
+    \includegraphics[width=\linewidth]{figures/generated/main_results/main_results_nsl_kdd.pdf}
+    \caption{Main-result visualization on NSL-KDD. Error bars indicate the standard deviation across four seeds.}
+    \label{fig:main_nsl}
+\end{figure}
+
+Table~\ref{tab:main_results_unsw} presents the more challenging UNSW-NB15 results. Here, the ranking changes substantially. HGBT-IDS and LSTM-IDS are both clearly stronger and more stable than the RL variants. Even after dataset-specific stabilization, Bi-ARL remains highly sensitive to initialization.
+
+\begin{table}[h]
+    \centering
+    \caption{UNSW-NB15 Main Results (Mean across 4 seeds)}
+    \label{tab:main_results_unsw}
+    \begin{tabular}{lcccc}
+        \hline
+        \textbf{Method} & \textbf{Recall} & \textbf{Precision} & \textbf{F1} & \textbf{FPR} \\
+        \hline
+        Vanilla PPO & 66.21\% & 58.67\% & 59.42\% & 58.72\% \\
+        MARL & 74.98\% & 68.30\% & 57.26\% & 66.81\% \\
+        LSTM-IDS & 97.85\% & 78.82\% & 87.30\% & 32.26\% \\
+        HGBT-IDS & 98.30\% & \textbf{82.07\%} & \textbf{89.45\%} & \textbf{26.31\%} \\
+        \hline
+        \textbf{Bi-ARL (Ours)} & 66.56\% & 48.80\% & 54.13\% & 53.56\% \\
+        \hline
+    \end{tabular}
+\end{table}
+
+\textbf{Cross-dataset interpretation}: the current Bi-ARL implementation should not be presented as a state-of-the-art IDS. It is competitive only within the RL subset on NSL-KDD, while the UNSW-NB15 experiments show that stronger supervised tabular baselines remain substantially better in both effectiveness and stability.
+
+\begin{figure}[t]
+    \centering
+    \includegraphics[width=\linewidth]{figures/generated/main_results/main_results_unsw_nb15.pdf}
+    \caption{Main-result visualization on UNSW-NB15. The supervised baselines remain clearly ahead of the current RL variants.}
+    \label{fig:main_unsw}
+\end{figure}
+
+\begin{figure*}[t]
+    \centering
+    \includegraphics[width=0.92\textwidth]{figures/generated/main_results/cross_dataset_main_results.pdf}
+    \caption{Cross-dataset comparison of mean F1 and FPR. The figure summarizes the core message of the paper: Bi-ARL is competitive only on the controlled NSL-KDD benchmark, while modern tabular baselines dominate on UNSW-NB15 and CIC-IDS2017.}
+    \label{fig:cross_dataset}
+\end{figure*}
+
+\subsection{Additional Benchmark: CIC-IDS2017}
+
+We further evaluate on CIC-IDS2017 in two settings. The first is a random stratified split (`cic-ids2017-random`), which is suitable for a conventional supervised-learning main table. The second is a stricter day-based split (`cic-ids2017`), where Monday--Thursday are used for training and Friday is held out for testing; this version is better interpreted as a cross-day generalization stress test.
+
+Table~\ref{tab:cic_random} reports the random-split results. Here, all three tree-based baselines nearly saturate the benchmark, while LSTM-IDS remains slightly weaker but still very strong. Short-run RL smoke tests on the same split are far below this level (Bi-ARL seed42: 36.48\% F1; Vanilla PPO seed42: 33.17\% F1), so we do not treat them as full main-table competitors for this dataset at the current stage.
+
+\begin{table}[h]
+    \centering
+    \caption{CIC-IDS2017 Random Stratified Split}
+    \label{tab:cic_random}
+    \begin{tabular}{lcccc}
+        \hline
+        \textbf{Method} & \textbf{Recall} & \textbf{Precision} & \textbf{F1} & \textbf{FPR} \\
+        \hline
+        LSTM-IDS & 97.76\% & 92.27\% & 94.93\% & 2.04\% \\
+        HGBT-IDS & 99.85\% & 99.63\% & 99.74\% & \textbf{0.09\%} \\
+        XGBoost-IDS & \textbf{99.89\%} & 99.59\% & 99.74\% & 0.10\% \\
+        LightGBM-IDS & 99.87\% & \textbf{99.62\%} & \textbf{99.75\%} & \textbf{0.09\%} \\
+        \hline
+    \end{tabular}
+\end{table}
+
+The random-split results are useful because they show that the feature representation itself is highly learnable by modern tabular methods. At the same time, the near-saturated scores also imply that this split is not sufficient by itself to demonstrate robustness or distribution-shift resistance.
+
+\begin{figure}[t]
+    \centering
+    \includegraphics[width=\linewidth]{figures/generated/main_results/main_results_cic_ids2017_random_split.pdf}
+    \caption{Main-result visualization on CIC-IDS2017 under a random stratified split. Modern tree-based tabular baselines nearly saturate this protocol.}
+    \label{fig:cic_random}
+\end{figure}
+
+On the stricter day-based split, the picture changes sharply. XGBoost-IDS achieves only 38.26\% mean F1, albeit with an extremely low FPR of 0.02\%, while HGBT-IDS and LightGBM-IDS are even weaker. This confirms that CIC-IDS2017 is highly sensitive to the evaluation protocol. For this reason, the most defensible paper structure is to use the random split as a standard benchmark table and the day-based split as a harder generalization case study rather than mixing the two into a single headline claim.
+
+\subsection{Ablation Study}
+
+For NSL-KDD, the ablation results indicate that the main practical gain comes from adversarially informed training: removing the attacker raises clean-data FPR from 10.41\% to 39.57\%. The full Bi-ARL model also achieves the best mean F1 among the RL variants.
+
+\begin{table}[h]
+    \centering
+    \caption{NSL-KDD Ablation Results (Mean across 4 seeds)}
+    \label{tab:ablation_nsl}
+    \begin{tabular}{lccc}
+        \hline
+        \textbf{Variant} & \textbf{Recall} & \textbf{F1} & \textbf{FPR} \\
+        \hline
+        w/o Inner Loop & 70.98\% & 78.78\% & 10.82\% \\
+        w/o Attacker (Vanilla PPO) & \textbf{76.39\%} & 74.12\% & 39.57\% \\
+        w/o Bi-level (MARL) & 70.97\% & 79.32\% & \textbf{9.54\%} \\
+        \hline
+        \textbf{Full Bi-ARL} & 72.38\% & \textbf{80.17\%} & 10.41\% \\
+        \hline
+    \end{tabular}
+\end{table}
+
+\begin{figure}[t]
+    \centering
+    \includegraphics[width=\linewidth]{figures/generated/ablation/ablation_nsl_kdd.pdf}
+    \caption{Ablation comparison on NSL-KDD. The full model has the best clean-data F1 among the RL variants, while removing adversarial training sharply increases FPR.}
+    \label{fig:ablation_nsl}
+\end{figure}
+
+On UNSW-NB15, however, the ablation trend is much less favorable. The fixed-attacker variant achieves lower mean FPR than full Bi-ARL (37.45\% vs.\ 53.56\%), and MARL attains higher recall at the cost of extremely high false alarms. This pattern indicates that the current inner-loop design is not yet stable enough to justify a strong causal claim on modern data.
+
+\begin{table}[h]
+    \centering
+    \caption{UNSW-NB15 Ablation Results (Mean across 4 seeds)}
+    \label{tab:ablation_unsw}
+    \begin{tabular}{lccc}
+        \hline
+        \textbf{Variant} & \textbf{Recall} & \textbf{F1} & \textbf{FPR} \\
+        \hline
+        w/o Inner Loop & 62.95\% & 56.07\% & \textbf{37.45\%} \\
+        w/o Attacker (Vanilla PPO) & 66.21\% & \textbf{59.42\%} & 58.72\% \\
+        w/o Bi-level (MARL) & \textbf{74.98\%} & 57.26\% & 66.81\% \\
+        \hline
+        \textbf{Full Bi-ARL} & 66.56\% & 54.13\% & 53.56\% \\
+        \hline
+    \end{tabular}
+\end{table}
+
+\begin{figure}[t]
+    \centering
+    \includegraphics[width=\linewidth]{figures/generated/ablation/ablation_unsw_nb15.pdf}
+    \caption{Ablation comparison on UNSW-NB15. The favorable NSL-KDD trend does not transfer cleanly to the modern benchmark.}
+    \label{fig:ablation_unsw}
+\end{figure}
+
+\subsection{Adversarial Robustness on NSL-KDD}
+
+We evaluate FGSM attacks \cite{goodfellow2014fgsm} on NSL-KDD with perturbation budget $\epsilon \in \{0.1, 0.3\}$:
+\begin{equation}
+    s' = s + \epsilon \cdot \text{sign}(\nabla_s L(\theta_{\mathcal{D}}, s, y)).
+\end{equation}
+
+\begin{table}[h]
+    \centering
+    \caption{NSL-KDD Adversarial Robustness under FGSM}
+    \label{tab:adversarial}
+    \begin{tabular}{lccc}
+        \hline
+        \textbf{Model} & \textbf{Attack} & \textbf{Recall} & \textbf{FPR} \\
+        \hline
+        \multirow{3}{*}{Bi-ARL}
+            & Clean & 72.38\% & 10.41\% \\
+            & FGSM-$\epsilon$0.1 & 89.53\% & 47.03\% \\
+            & FGSM-$\epsilon$0.3 & 94.85\% & 100.00\% \\
+        \hline
+        \multirow{3}{*}{Vanilla PPO}
+            & Clean & 76.39\% & 39.57\% \\
+            & FGSM-$\epsilon$0.1 & 81.64\% & 54.06\% \\
+            & FGSM-$\epsilon$0.3 & 86.94\% & 76.62\% \\
+        \hline
+    \end{tabular}
+\end{table}
+
+\textbf{Key finding}: the present Bi-ARL model is only partially robust. Under mild attacks, it still preserves lower FPR than vanilla PPO, but stronger perturbations cause severe degradation, including near-universal false alarms at $\epsilon=0.3$.
+
+\begin{figure}[t]
+    \centering
+    \includegraphics[width=\linewidth]{figures/generated/robustness/adversarial_robustness.pdf}
+    \caption{FGSM robustness curves on NSL-KDD. Both RL models degrade as the perturbation budget increases, and Bi-ARL does not remain robust under stronger attacks.}
+    \label{fig:robustness}
+\end{figure}
+
+\subsection{Discussion}
+
+Taken together, the experiments support a cautious conclusion. Bi-ARL is a meaningful RL formulation for adversarial IDS training and improves over a naive PPO baseline on NSL-KDD. However, the modern-data results reveal substantial instability and a clear gap to strong supervised tabular methods. For submission-quality follow-up work, the most important next step is to stabilize the inner-loop optimization and add at least one more contemporary benchmark such as CIC-IDS2017 or CSE-CIC-IDS2018.
