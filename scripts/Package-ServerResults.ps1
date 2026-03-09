@@ -43,9 +43,10 @@ $Items = @(
     "outputs\figures",
     "outputs\logs\server_runs",
     "docs\optimization_decision_log.md",
-    "docs\server_conda_setup.md",
-    $ManifestPath
+    "docs\server_conda_setup.md"
 ) | ForEach-Object { Join-Path $RootDir $_ }
+
+$Items += $ManifestPath
 
 if (Test-Path $ArchivePath) {
     Remove-Item $ArchivePath -Force
