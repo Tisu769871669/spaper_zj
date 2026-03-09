@@ -53,9 +53,33 @@ function Invoke-Python {
     )
 
     Write-RunLog ("RUN: {0} {1}" -f $PythonExe, ($Args -join " "))
-    & $PythonExe @Args 2>&1 | Tee-Object -FilePath $RunLog -Append
-    if ($LASTEXITCODE -ne 0) {
-        throw "Command failed: $PythonExe $($Args -join ' ')"
+
+    $psi = New-Object System.Diagnostics.ProcessStartInfo
+    $psi.FileName = $PythonExe
+    foreach ($arg in $Args) {
+        [void]$psi.ArgumentList.Add($arg)
+    }
+    $psi.RedirectStandardOutput = $true
+    $psi.RedirectStandardError = $true
+    $psi.UseShellExecute = $false
+    $psi.CreateNoWindow = $true
+
+    $process = New-Object System.Diagnostics.Process
+    $process.StartInfo = $psi
+    [void]$process.Start()
+
+    $stdout = $process.StandardOutput.ReadToEnd()
+    $stderr = $process.StandardError.ReadToEnd()
+    $process.WaitForExit()
+
+    if (-not [string]::IsNullOrWhiteSpace($stdout)) {
+        $stdout.TrimEnd("`r", "`n") | Tee-Object -FilePath $RunLog -Append
+    }
+    if (-not [string]::IsNullOrWhiteSpace($stderr)) {
+        $stderr.TrimEnd("`r", "`n") | Tee-Object -FilePath $RunLog -Append
+    }
+    if ($process.ExitCode -ne 0) {
+        throw "Command failed with exit code $($process.ExitCode): $PythonExe $($Args -join ' ')"
     }
 }
 
