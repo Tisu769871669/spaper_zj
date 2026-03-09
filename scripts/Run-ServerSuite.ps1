@@ -56,9 +56,14 @@ function Invoke-Python {
 
     $psi = New-Object System.Diagnostics.ProcessStartInfo
     $psi.FileName = $PythonExe
-    foreach ($arg in $CmdArgs) {
-        [void]$psi.ArgumentList.Add($arg)
+    $escapedArgs = $CmdArgs | ForEach-Object {
+        if ($_ -match '[\s"]') {
+            '"' + ($_ -replace '"', '\"') + '"'
+        } else {
+            $_
+        }
     }
+    $psi.Arguments = ($escapedArgs -join " ")
     $psi.RedirectStandardOutput = $true
     $psi.RedirectStandardError = $true
     $psi.UseShellExecute = $false
