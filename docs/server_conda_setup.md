@@ -296,6 +296,27 @@ conda activate spaper
 
 因此不会覆盖前一组的对比结果。
 
+### 8.4.3 最优 UNSW 配置迁移到 CIC-IDS2017-random
+
+如果 `UNSW-NB15` 上已经找到最优 `FT` 配置，下一步推荐直接验证其是否能迁移到第二个现代主数据集：
+
+```powershell
+conda activate spaper
+.\scripts\Run-FtTransferToCic.ps1 -CondaEnv spaper -Seeds 42,3407,8888,123 -GpuIds 0,1
+```
+
+该脚本当前固定使用已经验证过的最优 `UNSW` 配置：
+
+- `BatchSize=1024`
+- `Epsilon=0.015`
+- `Alpha=0.004`
+- `Steps=2`
+- `AdvWeight=0.65`
+- `LearningRate=0.0005`
+- `WeightDecay=0.0001`
+- `Dropout=0.15`
+- `DToken=64`
+
 脚本：
 
 - [Run-DualGpuOptimization.ps1](/d:/Study/研2/spaper_zj/scripts/Run-DualGpuOptimization.ps1)

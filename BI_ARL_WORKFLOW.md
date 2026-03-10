@@ -325,6 +325,24 @@ conda activate spaper
 - `main_results_summary_unsw_nb15_ft_unsw_bs1024_lr7e4_aw065.csv`
 - `main_results_summary_unsw_nb15_ft_unsw_bs1024_lr5e4_eps015.csv`
 
+### 5.4.3 最优配置迁移验证
+
+当 `UNSW-NB15` 上的最优 `FT` 配置确定后，下一步不是立刻继续刷同一个数据集，而是做迁移验证：
+
+- [Run-FtTransferToCic.ps1](/d:/Study/研2/spaper_zj/scripts/Run-FtTransferToCic.ps1)
+
+```powershell
+.\scripts\Run-FtTransferToCic.ps1 -CondaEnv spaper -Seeds 42,3407,8888,123 -GpuIds 0,1
+```
+
+当前这个脚本固定使用 `UNSW` 上的最优配置，把它迁移到：
+
+- `CIC-IDS2017-random`
+
+用途：
+
+- 判断这轮优化到底是 `UNSW` 特化收益，还是对第二个现代数据集也有效
+
 ### 5.5 服务器打包回传
 
 打包：
