@@ -537,3 +537,59 @@
 
 - 双卡并行本身不直接提升指标
 - 但它让“更长训练 + 更高吞吐”的优化实验真正值得做
+
+---
+
+## 12. 第二轮优化的重点是提高吞吐，而不是盲目扩数据集
+
+### 问题
+
+最新一轮 `UNSW-NB15 / BiAT-FTTransformer` 已经提升到：
+
+- `F1 = 88.91%`
+- `FPR = 18.41%`
+
+但服务器监控显示，两张 `V100 32GB` 在训练时显存占用都只有约 `1.2GB`。
+
+### 判断
+
+这说明当前瓶颈不是显存不够，而是：
+
+- 模型本身属于小型 tabular backbone
+- 当前 `batch_size=512` 过于保守
+- 我们更应该提高吞吐，再做小范围参数搜索
+
+### 优化思路
+
+第二轮优化优先做两件事：
+
+1. 把 `batch_size` 提到 `1024`
+2. 保持 `UNSW-NB15` 为主战场，只对 `BiAT-FTTransformer` 做小范围 sweep
+
+新增脚本：
+
+- `scripts/Run-FtOptimizationSweep.ps1`
+
+默认 sweep 三组配置：
+
+- `ft_unsw_bs1024_lr7e4_aw060`
+- `ft_unsw_bs1024_lr7e4_aw065`
+- `ft_unsw_bs1024_lr5e4_eps015`
+
+### 原因
+
+这三组配置对应三种判断：
+
+- 固定旧最优附近，只提高吞吐
+- 提高 `adv_weight`，测试是否能继续压低 FPR
+- 适当降低 `epsilon/alpha` 和 `lr`，测试是否能减少过强扰动带来的误伤
+
+### 当前决策
+
+下一阶段最值得投入服务器时间的，不是 `all`，也不是旧 `Bi-ARL`，而是：
+
+- `UNSW-NB15`
+- `BiAT-FTTransformer`
+- 更大 batch
+- 双卡并行
+- 小范围 sweep

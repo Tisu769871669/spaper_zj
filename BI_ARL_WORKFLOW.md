@@ -298,6 +298,33 @@ conda activate spaper
   - 更长训练轮次
   - 小规模超参数优化
 
+当前第二轮推荐命令：
+
+```powershell
+.\scripts\Run-DualGpuOptimization.ps1 -CondaEnv spaper -Model ft -Dataset unsw-nb15 -Epochs 15 -BatchSize 1024 -Epsilon 0.02 -Alpha 0.005 -Steps 2 -AdvWeight 0.6 -LearningRate 0.0007 -WeightDecay 0.0001 -Dropout 0.15 -DToken 64 -Seeds 42,3407,8888,123 -GpuIds 0,1
+```
+
+说明：
+
+- 这一版比上一轮更积极利用显卡
+- 目标不是重跑所有数据集，而是优先挖 `UNSW-NB15` 上的提升空间
+
+### 5.4.2 第二轮 sweep 入口
+
+如果服务器时间充足，可以直接跑小范围 sweep：
+
+- [Run-FtOptimizationSweep.ps1](/d:/Study/研2/spaper_zj/scripts/Run-FtOptimizationSweep.ps1)
+
+```powershell
+.\scripts\Run-FtOptimizationSweep.ps1 -CondaEnv spaper -Dataset unsw-nb15 -Seeds 42,3407,8888,123 -GpuIds 0,1
+```
+
+该脚本会自动保存带配置名的结果 CSV，用于比较：
+
+- `main_results_summary_unsw_nb15_ft_unsw_bs1024_lr7e4_aw060.csv`
+- `main_results_summary_unsw_nb15_ft_unsw_bs1024_lr7e4_aw065.csv`
+- `main_results_summary_unsw_nb15_ft_unsw_bs1024_lr5e4_eps015.csv`
+
 ### 5.5 服务器打包回传
 
 打包：

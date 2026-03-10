@@ -259,6 +259,43 @@ outputs/logs/server_runs/
 
 如果服务器上有两张 GPU，并且你要继续优化 `UNSW-NB15` 上的路线 C，推荐使用专门的双卡脚本，而不是重新跑整套 `core`。
 
+### 8.4.1 单配置强化训练
+
+当前推荐先用这一条做正式强化训练：
+
+```powershell
+conda activate spaper
+.\scripts\Run-DualGpuOptimization.ps1 -CondaEnv spaper -Model ft -Dataset unsw-nb15 -Epochs 15 -BatchSize 1024 -Epsilon 0.02 -Alpha 0.005 -Steps 2 -AdvWeight 0.6 -LearningRate 0.0007 -WeightDecay 0.0001 -Dropout 0.15 -DToken 64 -Seeds 42,3407,8888,123 -GpuIds 0,1
+```
+
+说明：
+
+- 这是当前最稳妥的第二轮优化起点
+- 相比旧配置，优先提高 `batch_size`
+- 目标是更充分利用 `V100 32GB`
+
+### 8.4.2 三配置 sweep
+
+如果服务器时间充足，并且你希望直接做一轮小范围搜索，可以用：
+
+```powershell
+conda activate spaper
+.\scripts\Run-FtOptimizationSweep.ps1 -CondaEnv spaper -Dataset unsw-nb15 -Seeds 42,3407,8888,123 -GpuIds 0,1
+```
+
+这轮 sweep 默认会依次跑三组配置：
+
+- `ft_unsw_bs1024_lr7e4_aw060`
+- `ft_unsw_bs1024_lr7e4_aw065`
+- `ft_unsw_bs1024_lr5e4_eps015`
+
+每组结束后，会自动保存带配置名的结果文件：
+
+- `outputs/results/main_results_summary_unsw_nb15_<config>.csv`
+- `outputs/results/main_results_detailed_unsw_nb15_<config>.csv`
+
+因此不会覆盖前一组的对比结果。
+
 脚本：
 
 - [Run-DualGpuOptimization.ps1](/d:/Study/研2/spaper_zj/scripts/Run-DualGpuOptimization.ps1)

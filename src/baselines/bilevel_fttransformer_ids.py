@@ -101,7 +101,16 @@ def compute_metrics(y_true: np.ndarray, y_pred: np.ndarray) -> Dict[str, float]:
 
 
 class BiLevelFTTransformerTrainer:
-    def __init__(self, seed: int, adv_cfg: AdversarialConfig | None = None):
+    def __init__(
+        self,
+        seed: int,
+        adv_cfg: AdversarialConfig | None = None,
+        *,
+        d_token: int = 64,
+        dropout: float = 0.15,
+        learning_rate: float = 7e-4,
+        weight_decay: float = 1e-4,
+    ):
         Config.set_seed(seed)
         self.seed = seed
         self.adv_cfg = adv_cfg or AdversarialConfig()
@@ -110,13 +119,21 @@ class BiLevelFTTransformerTrainer:
         self.X_train, self.y_train = loader.load_data(mode="train")
         self.X_test, self.y_test = loader.load_data(mode="test")
 
-        self.model = FTTransformerIDS(n_features=self.X_train.shape[1]).to(Config.DEVICE)
+        self.model = FTTransformerIDS(
+            n_features=self.X_train.shape[1],
+            d_token=d_token,
+            dropout=dropout,
+        ).to(Config.DEVICE)
 
         class_counts = np.bincount(self.y_train, minlength=2).astype(np.float32)
         class_weights = class_counts.sum() / np.maximum(class_counts, 1.0)
         class_weights = class_weights / class_weights.sum() * 2.0
         self.criterion = nn.CrossEntropyLoss(weight=torch.tensor(class_weights, device=Config.DEVICE))
-        self.optimizer = torch.optim.AdamW(self.model.parameters(), lr=7e-4, weight_decay=1e-4)
+        self.optimizer = torch.optim.AdamW(
+            self.model.parameters(),
+            lr=learning_rate,
+            weight_decay=weight_decay,
+        )
 
     def make_loader(self, batch_size: int) -> DataLoader:
         dataset = TensorDataset(
@@ -239,6 +256,10 @@ def main():
     parser.add_argument("--alpha", type=float, default=0.005)
     parser.add_argument("--steps", type=int, default=2)
     parser.add_argument("--adv_weight", type=float, default=0.6)
+    parser.add_argument("--lr", type=float, default=7e-4)
+    parser.add_argument("--weight_decay", type=float, default=1e-4)
+    parser.add_argument("--dropout", type=float, default=0.15)
+    parser.add_argument("--d_token", type=int, default=64)
     args = parser.parse_args()
 
     Config.configure_dataset(args.dataset)
@@ -250,6 +271,10 @@ def main():
             steps=args.steps,
             adv_weight=args.adv_weight,
         ),
+        d_token=args.d_token,
+        dropout=args.dropout,
+        learning_rate=args.lr,
+        weight_decay=args.weight_decay,
     )
     results = trainer.train(epochs=args.epochs, batch_size=args.batch_size)
     model_path = trainer.save()

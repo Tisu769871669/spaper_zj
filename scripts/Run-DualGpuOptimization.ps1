@@ -10,6 +10,10 @@ param(
     [double]$Alpha = 0.005,
     [int]$Steps = 2,
     [double]$AdvWeight = 0.6,
+    [double]$LearningRate = 0.0007,
+    [double]$WeightDecay = 0.0001,
+    [double]$Dropout = 0.15,
+    [int]$DToken = 64,
     [int[]]$GpuIds = @(0, 1)
 )
 
@@ -80,6 +84,15 @@ function Start-TrainingProcess {
         "--steps", "$Steps",
         "--adv_weight", "$AdvWeight"
     )
+
+    if ($ScriptPath -like "*bilevel_fttransformer_ids.py") {
+        $argList += @(
+            "--lr", "$LearningRate",
+            "--weight_decay", "$WeightDecay",
+            "--dropout", "$Dropout",
+            "--d_token", "$DToken"
+        )
+    }
 
     $escapedArgs = $argList | ForEach-Object {
         if ($_ -match '[\s"]') {
@@ -166,6 +179,7 @@ Write-RunLog "Model: $Model"
 Write-RunLog "Dataset: $Dataset"
 Write-RunLog ("Seeds: {0}" -f ($Seeds -join ", "))
 Write-RunLog ("GPU ids: {0}" -f ($GpuIds -join ", "))
+Write-RunLog ("Hyperparams: epochs={0}, batch={1}, epsilon={2}, alpha={3}, steps={4}, adv_weight={5}, lr={6}, wd={7}, dropout={8}, d_token={9}" -f $Epochs, $BatchSize, $Epsilon, $Alpha, $Steps, $AdvWeight, $LearningRate, $WeightDecay, $Dropout, $DToken)
 
 $modelScripts = switch ($Model) {
     "ft" { @("src/baselines/bilevel_fttransformer_ids.py") }
