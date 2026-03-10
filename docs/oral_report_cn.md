@@ -2,7 +2,7 @@
 
 ## 1. 课题题目
 
-基于双层对抗强化学习的网络威胁检测方法研究
+基于双层对抗训练的网络威胁检测方法研究
 
 英文题目：
 
@@ -22,7 +22,7 @@ Bi-level Adversarial Reinforcement Learning for Robust Network Threat Detection
 
 ## 3. 研究目标
 
-本课题的目标是提出一个 Bi-level Adversarial Reinforcement Learning，也就是 `Bi-ARL` 框架，用于网络威胁检测。
+本课题最初的目标是提出一个 Bi-level Adversarial Reinforcement Learning，也就是 `Bi-ARL` 框架，用于网络威胁检测。
 
 核心思想是：
 
@@ -31,19 +31,30 @@ Bi-level Adversarial Reinforcement Learning for Robust Network Threat Detection
 - 训练时不是简单同时更新两个 agent
 - 而是先让 attacker 朝着更强响应逼近，再让 defender 针对该 attacker 更新
 
-这样做的目的，是希望 defender 学到的策略不仅适应普通样本，还能更好适应对抗式扰动。
+随着实验推进，我们进一步把这套 bi-level 思想迁移到强监督检测器上，形成了路线 C，也就是：
+
+- `BiAT-MLP`
+- `BiAT-FTTransformer`
+
+这样做的目的，是希望 defender 不仅适应普通样本，还能针对更强扰动进行训练，同时避免纯 RL 检测器在现代数据集上的性能瓶颈。
 
 ## 4. 方法简介
 
-方法整体由四部分组成：
+方法整体现在分成两条线：
+
+- 旧主线：`Bi-ARL`
+- 新主线：`BiAT`
+
+整体包括四部分：
 
 1. 网络安全对抗环境
    - 将流量样本作为状态
    - attacker 对攻击流量施加扰动
    - defender 根据扰动后的观测做判定
 
-2. attacker 和 defender 两个策略网络
-   - 都基于 PPO 进行策略优化
+2. 攻防训练机制
+   - 旧主线中 attacker 和 defender 都基于 PPO
+   - 新主线中 defender 改为监督式 tabular detector
 
 3. bi-level 训练机制
    - inner loop：训练 attacker
@@ -111,20 +122,22 @@ Bi-level Adversarial Reinforcement Learning for Robust Network Threat Detection
 
 ### 7.2 UNSW-NB15 上的结果
 
-在 `UNSW-NB15` 上，`Bi-ARL` 的均值结果大约是：
+在 `UNSW-NB15` 上，旧 `Bi-ARL` 的均值结果大约是：
 
 - `F1 = 54.13%`
 - `FPR = 53.56%`
 
 而强监督表格模型结果更好：
 
-- `HGBT-IDS`：`F1 = 89.45%`
-- `LSTM-IDS`：`F1 = 87.30%`
+- `BiAT-MLP`：`F1 = 86.40%`
+- `BiAT-FTTransformer`：`F1 = 89.51%`
+- `LightGBM-IDS`：`F1 = 91.86%`
 
 这说明：
 
 - 当前 `Bi-ARL` 在现代数据集上还不稳定
-- 还不能和强监督模型正面竞争
+- 但路线 C 已经取得了明显更强的现代数据结果
+- 其中 `BiAT-FTTransformer` 的 `FPR = 14.97%`，已经是当前对照方法里最低的
 
 ### 7.3 CIC-IDS2017-random 上的结果
 
@@ -136,14 +149,23 @@ Bi-level Adversarial Reinforcement Learning for Robust Network Threat Detection
 
 `LSTM-IDS` 结果为：
 
-- `F1 = 94.93%`
+- `F1 = 94.98%`
 
 而 RL 的 smoke test 明显更弱：
 
 - `Bi-ARL seed42`：`F1 = 36.48%`
 - `Vanilla PPO seed42`：`F1 = 33.17%`
 
-这说明在 `CIC-IDS2017-random` 上，当前 RL 线并不具备竞争力。
+进一步把 `UNSW` 上最优 `FT` 配置迁移过来后，`BiAT-FTTransformer` 提升到：
+
+- `F1 = 87.09%`
+- `FPR = 6.78%`
+
+这说明在 `CIC-IDS2017-random` 上：
+
+- 路线 C 明显强于旧 RL 线
+- 最优 `UNSW` 配置具备一定迁移性
+- 但收益仍然有限，远未接近树模型
 
 ### 7.4 CIC-IDS2017 日期划分结果
 
@@ -161,12 +183,12 @@ Bi-level Adversarial Reinforcement Learning for Robust Network Threat Detection
 目前可以得出的结论是：
 
 1. `Bi-ARL` 在 `NSL-KDD` 上相对普通 RL 是有效的。
-2. `Bi-ARL` 当前最能成立的贡献，是提供了一个有研究意义的 bi-level RL 框架。
-3. 在 `UNSW-NB15` 和 `CIC-IDS2017` 上，强监督表格模型明显更强。
-4. 因此，这项工作的价值更偏向：
-   - 方法框架
-   - 负面结果分析
-   - 现代数据集上的局限性揭示
+2. 路线 C 说明：同样的 bi-level 思想迁移到更强监督检测器后，现代数据表现会明显改善。
+3. `BiAT-FTTransformer` 已经成为当前最强神经网络主方法。
+4. 在 `UNSW-NB15` 上，它拿到了：
+   - `F1 = 89.51%`
+   - `FPR = 14.97%`
+5. 在 `CIC-IDS2017-random` 上，它仍明显落后于树模型，因此论文不能写成 SOTA。
 
 而不是“全面领先的最优 IDS 模型”。
 
@@ -175,17 +197,17 @@ Bi-level Adversarial Reinforcement Learning for Robust Network Threat Detection
 我认为当前最合理的创新点有三点：
 
 1. 将网络威胁检测建模为一个 bi-level attacker-defender 优化问题
-2. 用 RL 的方式显式逼近 attacker 的更强响应，而不是只做普通 simultaneous-update
-3. 不只给出正结果，也系统展示了该方法在现代数据集和不同评测协议下的局限性
+2. 将同一套 bi-level 对抗训练思想从纯 RL 检测器扩展到监督式 tabular detector
+3. 在现代数据集上实现了一个更强的 `BiAT-FTTransformer` 版本，并验证了其跨数据集的有限迁移性
 
 ## 10. 当前不足
 
 主要不足有：
 
-1. RL 在现代数据集上的性能还不够强
-2. 种子敏感性仍然存在
-3. 还没有纳入 Transformer / SSL / GNN 这类更近期的深度 baseline
-4. 目前最强结果仍然集中在 `NSL-KDD`，这会限制投稿层级
+1. 旧 RL 主线在现代数据集上的性能仍然偏弱
+2. 当前最强结果主要来自 `UNSW-NB15`
+3. 相比 `LightGBM / XGBoost`，整体 `F1` 仍有差距
+4. 还没有纳入更近期的 SSL / GNN baseline
 
 ## 11. 下一步计划
 
@@ -209,6 +231,6 @@ Bi-level Adversarial Reinforcement Learning for Robust Network Threat Detection
 
 但也必须保持清醒：
 
-- `Bi-ARL` 目前在受控 benchmark 上成立
-- 在现代数据集上还不够强
-- 因此更适合定位成“有研究价值的方法探索”，而不是“已经成熟的高性能 IDS 系统”
+- `Bi-ARL` 在受控 benchmark 上成立
+- 路线 C 已经把现代数据结果明显往前推进
+- 但这项工作目前更适合定位成“有竞争力的 bi-level 对抗训练框架”，而不是“已经全面领先的 IDS 系统”
