@@ -1,7 +1,7 @@
 \section{Methodology}
 \label{sec:methodology}
 
-This section details the proposed Bi-level Adversarial Reinforcement Learning (Bi-ARL) framework. We first formalize the network threat detection problem as a Stackelberg game, then describe the bi-level optimization algorithm with PPO-based policy updates.
+This section details the proposed Bi-level Adversarial Reinforcement Learning (Bi-ARL) framework and the key design principle later reused in route C. We first formalize the network threat detection problem as a Stackelberg game, then describe the bi-level optimization algorithm with PPO-based policy updates. The central idea is the same across both lines of the project: an outer defender update is performed against an attacker that is repeatedly adapted toward a stronger response. In the original line, this defender is a PPO policy; in route C, the same bilevel logic is reused with supervised tabular detectors such as MLP and FT-Transformer.
 
 \subsection{Problem Formulation}
 Consider a network environment with state space $\mathcal{S}$ representing tabular traffic-flow features. In our implementation, the state dimensionality depends on the dataset profile (e.g., 41 for NSL-KDD, 42 for UNSW-NB15, and 78 for CIC-IDS2017 after preprocessing). The interaction involves two agents: an Attacker ($\mathcal{A}$) and a Defender ($\mathcal{D}$).
