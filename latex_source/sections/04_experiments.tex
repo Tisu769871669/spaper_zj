@@ -11,7 +11,7 @@ We evaluate on three public tabular IDS benchmarks.
     \item \textbf{CIC-IDS2017}: a modern flow-based benchmark. We use a random stratified split as the main setting and discuss the stricter day-based split as a supplementary protocol.
 \end{itemize}
 
-NSL-KDD remains useful for controlled ablation, but it is not sufficient as a standalone modern benchmark. We therefore center the main modern evaluation on UNSW-NB15 and CIC-IDS2017, following recent concerns on dataset obsolescence and cross-dataset validity in IDS research \cite{cantone2024crossdataset, datasetreview2025}.
+NSL-KDD remains useful for controlled ablation, but it is not sufficient as a standalone modern benchmark. We therefore center the main modern evaluation on UNSW-NB15 and CIC-IDS2017, following recent concerns on dataset obsolescence and cross-dataset validity in IDS research \cite{cantone2024crossdataset, datasetreview2025}. This choice is still aligned with current practice: recent 2025 cross-dataset transformer studies continue to use these benchmarks, even while the community also begins to incorporate newer resources such as NF-UQ-NIDS and 5G-NIDD \cite{xin2025crossdatasettransformer, shield2025, siriwardhana2025nidd}.
 
 \subsubsection{Baselines}
 We compare both the original Bi-ARL line and the refactored route-C detectors against strong tabular baselines:
