@@ -57,7 +57,7 @@
 | `Bi-ARL / Vanilla PPO / MARL / FixedAttacker` | `NSL-KDD` | 已完成 | 旧 RL 线在受控基准上成立 | 历史主线、消融、鲁棒性 |
 | `Bi-ARL / Vanilla PPO / MARL` | `UNSW-NB15` | 已完成 | 旧 RL 线效果明显不足 | 反证旧路线局限 |
 | `BiAT-MLP` | `UNSW-NB15` | 已完成 | 相比旧 RL 线显著提升 | 新主线主结果 |
-| `BiAT-FTTransformer` | `UNSW-NB15` | 已完成 | 明显优于 `BiAT-MLP` 和 `LSTM`，但仍低于树模型 | 当前主方法 |
+| `BiAT-FTTransformer` | `UNSW-NB15` | 已完成 | `F1=88.91%`, `FPR=18.41%`，明显优于 `BiAT-MLP` 和 `LSTM`，并在 FPR 上优于 `XGBoost` | 当前主方法 |
 | `XGBoost / LightGBM / LSTM / HGBT` | `UNSW-NB15` | 已完成 | 构成现代强基线 | 主对照组 |
 | `BiAT-MLP` | `CIC-IDS2017-random` | 已完成 | 明显优于旧 RL，但仍落后树模型 | 新主线第二主实验 |
 | `BiAT-FTTransformer` | `CIC-IDS2017-random` | 已完成 | 比 `BiAT-MLP` 小幅更优，但仍显著落后于树模型和 `LSTM` | backbone 升级验证 |
@@ -521,6 +521,7 @@ outputs/results/
 - `UNSW-NB15` 是当前最关键的现代主实验集
 - Windows 服务器批量实验链路已经打通
 - `BiAT-FTTransformer` 已经成为当前最好的神经网络主方法
+- 在 `UNSW-NB15` 上，`BiAT-FTTransformer` 已经把 `FPR` 压到 18.41\%，优于 `XGBoost`
 
 ### 还没完全成立的
 

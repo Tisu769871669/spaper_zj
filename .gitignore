@@ -27,6 +27,7 @@ runs/
 *.pt
 *.ckpt
 *.jsonl
+*.7z
 
 # LaTeX build artifacts
 latex_source/*.aux
@@ -43,4 +44,3 @@ latex_source/out/
 
 # Generated figures copied from scripts
 latex_source/figures/generated/
-

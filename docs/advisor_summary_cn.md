@@ -44,7 +44,7 @@
 
 - `Bi-ARL`: `F1 = 54.13%`
 - `BiAT-MLP`: `F1 = 86.40%`
-- `BiAT-FTTransformer`: `F1 = 88.24%`
+- `BiAT-FTTransformer`: `F1 = 88.91%`
 - `LSTM-IDS`: `F1 = 87.57%`
 - `LightGBM-IDS`: `F1 = 91.86%`
 
@@ -52,6 +52,7 @@
 
 - 旧 RL 主线在现代数据集上不成立
 - 但路线 C 已经显著改善，并且 `BiAT-FTTransformer` 已优于 `BiAT-MLP` 和 `LSTM-IDS`
+- `BiAT-FTTransformer` 的 `FPR = 18.41%`，已经低于 `XGBoost`
 - 不过它仍未超过最强树模型，因此论文不能写成“全面领先”
 
 ### 3. 在 CIC-IDS2017 上
