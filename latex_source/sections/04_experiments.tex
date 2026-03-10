@@ -67,7 +67,7 @@ The NSL-KDD evidence supports a narrow claim: Bi-ARL offers a better precision-r
     \label{fig:main_nsl}
 \end{figure}
 
-Table~\ref{tab:main_results_unsw} presents the more challenging UNSW-NB15 results. Here, the ranking changes substantially. The original Bi-ARL remains highly unstable, whereas the route-C models are clearly stronger. In particular, BiAT-FTTransformer improves over BiAT-MLP by nearly 2.5 F1 points and reduces mean FPR by almost ten points. It remains behind LightGBM on overall F1, but its mean FPR is already lower than XGBoost and much lower than the other neural baselines.
+Table~\ref{tab:main_results_unsw} presents the more challenging UNSW-NB15 results. Here, the ranking changes substantially. The original Bi-ARL remains highly unstable, whereas the route-C models are clearly stronger. After a second multi-GPU optimization round, BiAT-FTTransformer improves over BiAT-MLP by more than 2.5 F1 points and reduces mean FPR by over thirteen points. It still remains behind LightGBM on overall F1, but it now achieves the lowest mean FPR among all compared methods on UNSW-NB15.
 
 \begin{table}[h]
     \centering
@@ -79,7 +79,7 @@ Table~\ref{tab:main_results_unsw} presents the more challenging UNSW-NB15 result
         \hline
         Bi-ARL & 66.56\% & 48.80\% & 54.13\% & 53.56\% \\
         BiAT-MLP & 93.63\% & 80.21\% & 86.40\% & 28.31\% \\
-        BiAT-FTTransformer & 92.06\% & 85.98\% & 88.91\% & 18.41\% \\
+        BiAT-FTTransformer & 90.90\% & 88.19\% & 89.51\% & 14.97\% \\
         LSTM-IDS & \textbf{97.44\%} & 79.53\% & 87.57\% & 30.77\% \\
         HGBT-IDS & 98.30\% & 82.07\% & 89.45\% & 26.31\% \\
         XGBoost-IDS & 97.02\% & 86.17\% & 91.27\% & 19.08\% \\
@@ -88,12 +88,12 @@ Table~\ref{tab:main_results_unsw} presents the more challenging UNSW-NB15 result
     \end{tabular}
 \end{table}
 
-\textbf{Cross-dataset interpretation}: the current Bi-ARL implementation should not be presented as a state-of-the-art IDS. The more defensible positive claim is narrower: route C substantially improves over the original RL formulation, and BiAT-FTTransformer becomes the strongest neural detector on UNSW-NB15. Although modern boosted-tree baselines remain the strongest overall, the best route-C model now achieves a lower mean FPR than XGBoost while staying within three F1 points of LightGBM.
+\textbf{Cross-dataset interpretation}: the current Bi-ARL implementation should not be presented as a state-of-the-art IDS. The more defensible positive claim is narrower: route C substantially improves over the original RL formulation, and BiAT-FTTransformer becomes the strongest neural detector on UNSW-NB15. Although LightGBM remains the strongest overall on mean F1, the best route-C model now achieves the lowest mean FPR among all compared methods while staying within roughly two and a half F1 points of LightGBM.
 
 \begin{figure}[t]
     \centering
     \includegraphics[width=\linewidth]{figures/generated/main_results/main_results_unsw_nb15.pdf}
-    \caption{Main-result visualization on UNSW-NB15. Route C substantially narrows the gap, with BiAT-FTTransformer becoming the strongest neural model and achieving a lower FPR than XGBoost, although LightGBM still leads overall.}
+    \caption{Main-result visualization on UNSW-NB15. Route C substantially narrows the gap, with BiAT-FTTransformer becoming the strongest neural model and achieving the lowest mean FPR, although LightGBM still leads overall on F1.}
     \label{fig:main_unsw}
 \end{figure}
 
