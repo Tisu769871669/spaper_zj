@@ -108,7 +108,7 @@ Table~\ref{tab:main_results_unsw} presents the more challenging UNSW-NB15 result
 
 We further evaluate on CIC-IDS2017 in two settings. The first is a random stratified split (`cic-ids2017-random`), which is suitable for a conventional supervised-learning main table. The second is a stricter day-based split (`cic-ids2017`), where Monday--Thursday are used for training and Friday is held out for testing; this version is better interpreted as a cross-day generalization stress test.
 
-Table~\ref{tab:cic_random} reports the random-split results. Here, all three tree-based baselines nearly saturate the benchmark, while LSTM-IDS remains very strong. Route C improves substantially over the old RL line, but the gain from FT-Transformer over BiAT-MLP is small on this dataset, and neither route-C model approaches the boosted-tree baselines.
+Table~\ref{tab:cic_random} reports the random-split results. Here, all three tree-based baselines nearly saturate the benchmark, while LSTM-IDS remains very strong. Route C improves substantially over the old RL line, but the gain from FT-Transformer over BiAT-MLP is still small on this dataset even after transferring the best UNSW-NB15 hyperparameter setting, and neither route-C model approaches the boosted-tree baselines.
 
 \begin{table}[h]
     \centering
@@ -119,7 +119,7 @@ Table~\ref{tab:cic_random} reports the random-split results. Here, all three tre
         \textbf{Method} & \textbf{Recall} & \textbf{Precision} & \textbf{F1} & \textbf{FPR} \\
         \hline
         BiAT-MLP & 98.65\% & 77.39\% & 86.73\% & 7.16\% \\
-        BiAT-FTTransformer & 97.90\% & 78.10\% & 86.88\% & 6.82\% \\
+        BiAT-FTTransformer & 98.20\% & 78.24\% & 87.09\% & 6.78\% \\
         LSTM-IDS & 98.16\% & 92.01\% & 94.98\% & 2.12\% \\
         HGBT-IDS & 99.85\% & 99.63\% & 99.74\% & \textbf{0.09\%} \\
         XGBoost-IDS & \textbf{99.89\%} & 99.59\% & 99.74\% & 0.10\% \\
@@ -128,7 +128,7 @@ Table~\ref{tab:cic_random} reports the random-split results. Here, all three tre
     \end{tabular}
 \end{table}
 
-The random-split results are useful because they show that the feature representation itself is highly learnable by modern tabular methods. At the same time, the near-saturated scores imply that this split is not sufficient by itself to demonstrate robustness or distribution-shift resistance. For route C, the main lesson is that replacing MLP with FT-Transformer helps only marginally on this protocol.
+The random-split results are useful because they show that the feature representation itself is highly learnable by modern tabular methods. At the same time, the near-saturated scores imply that this split is not sufficient by itself to demonstrate robustness or distribution-shift resistance. For route C, the main lesson is that replacing MLP with FT-Transformer and transferring the best UNSW configuration still helps only marginally on this protocol.
 
 \begin{figure}[t]
     \centering

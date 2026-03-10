@@ -69,7 +69,7 @@
 - `LightGBM-IDS`: `F1 = 99.75%`
 - `LSTM-IDS`: `F1 = 94.98%`
 - `BiAT-MLP`: `F1 = 86.73%`
-- `BiAT-FTTransformer`: `F1 = 86.88%`
+- `BiAT-FTTransformer`: `F1 = 87.09%`
 
 RL 的短程结果很弱：
 

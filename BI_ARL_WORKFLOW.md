@@ -60,7 +60,7 @@
 | `BiAT-FTTransformer` | `UNSW-NB15` | 已完成 | `F1=89.51%`, `FPR=14.97%`，明显优于 `BiAT-MLP` 和 `LSTM`，并在 FPR 上优于全部对照方法 | 当前主方法 |
 | `XGBoost / LightGBM / LSTM / HGBT` | `UNSW-NB15` | 已完成 | 构成现代强基线 | 主对照组 |
 | `BiAT-MLP` | `CIC-IDS2017-random` | 已完成 | 明显优于旧 RL，但仍落后树模型 | 新主线第二主实验 |
-| `BiAT-FTTransformer` | `CIC-IDS2017-random` | 已完成 | 比 `BiAT-MLP` 小幅更优，但仍显著落后于树模型和 `LSTM` | backbone 升级验证 |
+| `BiAT-FTTransformer` | `CIC-IDS2017-random` | 已完成 | `F1=87.09%`, `FPR=6.78%`，比 `BiAT-MLP` 小幅更优，但仍显著落后于树模型和 `LSTM` | backbone 升级验证 |
 | `XGBoost / LightGBM / LSTM / HGBT` | `CIC-IDS2017-random` | 已完成 | 树模型非常强 | 主对照组 |
 | `XGBoost / LightGBM / BiAT-*` | `CICIoT2023 / grouped` | 已完成 | 当前二分类任务过于容易 | 补充数据集 |
 | Windows 服务器批量实验脚本 | `UNSW + CIC` | 已完成 | `core` 已成功跑完，主结果已带回本地 | 正式多种子训练 |
@@ -571,7 +571,7 @@ outputs/results/
 ### 还没完全成立的
 
 - 新主线还没有全面超过强树模型
-- `CIC-IDS2017-random` 上 `BiAT-FTTransformer` 只比 `BiAT-MLP` 小幅提升
+- `CIC-IDS2017-random` 上 `BiAT-FTTransformer` 迁移最优 `UNSW` 配置后仍只有小幅提升
 - `CICIoT2023` 当前更适合作为补充，而不是主证明集
 
 ---
