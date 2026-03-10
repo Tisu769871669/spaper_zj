@@ -85,8 +85,8 @@ foreach ($cfg in $configs) {
     )
 
     $argString = $cmd -join " "
-    Write-SweepLog "RUN: powershell -ExecutionPolicy Bypass -File $argString"
-    powershell -ExecutionPolicy Bypass -File .\scripts\Run-DualGpuOptimization.ps1 `
+    Write-SweepLog "RUN: $argString"
+    & .\scripts\Run-DualGpuOptimization.ps1 `
         -CondaEnv $CondaEnv `
         -Model ft `
         -Dataset $Dataset `
