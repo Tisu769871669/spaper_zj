@@ -1,7 +1,7 @@
 """
-Bi-level adversarial supervised IDS baseline.
+Bi-level adversarial supervised IDS baseline (BiAT-MLP).
 
-This module is the first implementation for the route-C refactor:
+This module implements the BiAT (Bilevel Adversarial Training) framework for MLP:
     inner loop  -> attacker optimizes perturbations on input features
     outer loop  -> supervised detector minimizes clean + adversarial loss
 """

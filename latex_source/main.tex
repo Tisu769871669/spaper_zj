@@ -8,7 +8,9 @@
 \usepackage{graphicx}
 \usepackage{textcomp}
 \usepackage{xcolor}
-\usepackage{multirow}  % 支持表格多行合并
+\usepackage{multirow}
+\usepackage{booktabs}
+\usepackage{siunitx}
 
 % 为算法环境定义缺失的命令
 \algrenewcommand\algorithmicrequire{\textbf{Input:}}
@@ -34,7 +36,7 @@
 \maketitle
 
 \begin{abstract}
-    Network threat detection faces significant challenges from adaptive attackers, dataset shift, and evasion-oriented perturbations. This paper starts from a \textbf{Bi-level Adversarial Reinforcement Learning (Bi-ARL)} formulation and then refactors the same bilevel idea into a stronger supervised tabular detector. We evaluate both the original RL line and the refactored route-C models on three public intrusion-detection benchmarks: NSL-KDD, UNSW-NB15, and CIC-IDS2017. On NSL-KDD, Bi-ARL still achieves the best mean F1 score among the RL variants (\textbf{80.17\%}) and substantially reduces false positives relative to vanilla PPO (10.41\% vs.\ 39.57\%). On the more modern UNSW-NB15 benchmark, the strongest route-C model, \textbf{BiAT-FTTransformer}, reaches \textbf{89.51\%} mean F1 and \textbf{14.97\%} mean FPR, making it the strongest neural detector in our study and yielding the lowest false positive rate among all compared methods on that dataset. On CIC-IDS2017 under a random stratified split, however, strong tree-based tabular baselines still dominate with about \textbf{99.7\%} mean F1, while route-C remains clearly behind. These findings support a narrower but stronger conclusion: explicit bilevel adversarial training is useful, the FT-Transformer backbone materially improves the modern-data results, but the overall framework is not yet state of the art against the strongest boosted-tree baselines.
+    Network intrusion detection systems (IDS) face a fundamental challenge: static detectors trained on fixed datasets degrade when confronted with adaptive attackers who optimize evasion strategies in response to the deployed model. This paper proposes \textbf{Bi-level Adversarial Reinforcement Learning (Bi-ARL)}, a framework that formalizes attacker-defender interaction as a Stackelberg game and trains the detector against an adversary that is repeatedly adapted toward its best response, rather than against a static or simultaneously updated opponent. We further transfer the same bilevel adversarial training principle to stronger supervised tabular detectors, yielding \textbf{BiAT-MLP} and \textbf{BiAT-FTTransformer}. Systematic evaluation across NSL-KDD, UNSW-NB15, and CIC-IDS2017 demonstrates three consistent findings: (1) on NSL-KDD, Bi-ARL achieves the best mean F1 among RL baselines (80.17\%) and reduces FPR by 29.16 percentage points versus vanilla PPO; (2) on UNSW-NB15, BiAT-FTTransformer reaches 89.51\% mean F1 with 14.97\% mean FPR, attaining the lowest false positive rate among all neural detectors; and (3) both FGSM and PGD robustness analysis reveals that bilevel training provides partial adversarial robustness on NSL-KDD, motivating further work on inner-loop stability. These results establish that explicit leader-follower bilevel optimization is a principled and effective approach for adversarially robust IDS training, with clear pathways for improvement on modern benchmarks.
 \end{abstract}
 
 \begin{IEEEkeywords}

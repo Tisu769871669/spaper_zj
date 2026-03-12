@@ -1,0 +1,259 @@
+\begin{thebibliography}{10}
+
+\bibitem{shield2025}
+{SHIELD}: {NF-UQ-NIDS} dataset platform.
+\newblock \url{https://shield-datasets.in/}, 2025.
+\newblock Accessed 2026-03-10.
+
+\bibitem{datasetreview2025}
+Bander Alshammari et~al.
+\newblock Network intrusion datasets: A survey, limitations, and
+  recommendations.
+\newblock {\em arXiv preprint arXiv:2502.06688}, 2025.
+
+\bibitem{anderson2016rl_security}
+Hyrum~S. Anderson, Jonathan Woodbridge, and Bobby Filar.
+\newblock Leveraging influence in information security: Using reinforcement
+  learning for intrusion response and network security policy.
+\newblock In {\em Proceedings of the AAAI Workshop on Artificial Intelligence
+  and Cybersecurity}, 2016.
+
+\bibitem{apruzzese2022adversarial_nids}
+Giovanni Apruzzese, Michele Colajanni, Luca Ferretti, and Mirco Marchetti.
+\newblock Modeling realistic adversarial attacks against network intrusion
+  detection systems.
+\newblock {\em Digital Threats: Research and Practice}, 3(3):1--19, 2022.
+
+\bibitem{bard1998bilevel}
+Jonathan~F. Bard.
+\newblock {\em Practical Bilevel Optimization: Algorithms and Applications}.
+\newblock Kluwer Academic Publishers, Dordrecht, Netherlands, 1998.
+
+\bibitem{ben2009robust}
+Aharon Ben-Tal, Laurent El~Ghaoui, and Arkadi Nemirovski.
+\newblock Robust optimization.
+\newblock {\em Princeton University Press}, 2009.
+
+\bibitem{biggio2013evasion}
+Battista Biggio, Igino Corona, Davide Maiorca, Blaine Nelson, Nedim Srndic,
+  Pavel Laskov, Giorgio Giacinto, and Fabio Roli.
+\newblock Evasion attacks against machine learning at test time.
+\newblock In {\em Proceedings of the European Conference on Machine Learning
+  and Principles and Practice of Knowledge Discovery in Databases (ECML PKDD)},
+  pages 387--402, 2013.
+
+\bibitem{busoniu2008marl}
+Lucian Busoniu, Robert Babuska, and Bart De~Schutter.
+\newblock A comprehensive survey of multiagent reinforcement learning.
+\newblock {\em IEEE Transactions on Systems, Man, and Cybernetics, Part C},
+  38(2):156--172, 2008.
+
+\bibitem{cantone2024crossdataset}
+Marco Cantone, Claudio Marrocco, and Alessandro Bria.
+\newblock Machine learning in network intrusion detection: A cross-dataset
+  generalization study.
+\newblock {\em IEEE Access}, 12:144489--144508, 2024.
+
+\bibitem{carlini2017cw}
+Nicholas Carlini and David Wagner.
+\newblock Towards evaluating the robustness of neural networks.
+\newblock In {\em Proceedings of the IEEE Symposium on Security and Privacy
+  (S\&P)}, pages 39--57, 2017.
+
+\bibitem{colson2007bilevel}
+Beno{\^i}t Colson, Patrice Marcotte, and Gilles Savard.
+\newblock An overview of bilevel optimization.
+\newblock {\em Annals of Operations Research}, 153(1):235--256, 2007.
+
+\bibitem{golchin2024ssclids}
+Pegah Golchin, Nima Rafiee, Mehrdad Hajizadeh, Ahmad Khalil, Ralf Kundel, and
+  Ralf Steinmetz.
+\newblock {SSCL-IDS}: Enhancing generalization of intrusion detection with
+  self-supervised contrastive learning.
+\newblock In {\em 2024 IFIP Networking Conference (IFIP Networking)}, pages
+  404--412, 2024.
+
+\bibitem{goodfellow2015fgsm}
+Ian~J. Goodfellow, Jonathon Shlens, and Christian Szegedy.
+\newblock Explaining and harnessing adversarial examples.
+\newblock In {\em International Conference on Learning Representations (ICLR)},
+  2015.
+
+\bibitem{gorishniy2021fttransformer}
+Yury Gorishniy, Ivan Rubachev, Valentin Khrulkov, and Artem Babenko.
+\newblock Revisiting deep learning models for tabular data.
+\newblock In {\em Advances in Neural Information Processing Systems (NeurIPS)},
+  volume~34, pages 18932--18943, 2021.
+
+\bibitem{hu2003nashq}
+Junling Hu and Michael~P. Wellman.
+\newblock Nash q-learning for general-sum stochastic games.
+\newblock {\em Journal of Machine Learning Research (JMLR)}, 4:1039--1069,
+  2003.
+
+\bibitem{li2022advrl_security}
+Yang Li, Xiaomeng Ye, Hui Yao, Zhibo Li, Dandan Guo, and Xiaolong Wang.
+\newblock Adversarial deep reinforcement learning for cyber security in
+  software defined networks.
+\newblock {\em Electronics}, 11(3):385, 2022.
+
+\bibitem{liao2024survey}
+H.~Liao et~al.
+\newblock A survey of deep learning technologies for intrusion detection in
+  internet of things.
+\newblock {\em IEEE Internet of Things Journal}, 11(3):4569--4602, 2024.
+
+\bibitem{lowe2017maddpg}
+Ryan Lowe, Yi~Wu, Aviv Tamar, Jean Harb, Pieter Abbeel, and Igor Mordatch.
+\newblock Multi-agent actor-critic for mixed cooperative-competitive
+  environments.
+\newblock In {\em Advances in Neural Information Processing Systems (NeurIPS)},
+  pages 6379--6390, 2017.
+
+\bibitem{madry2018pgd}
+Aleksander Madry, Aleksandar Makelov, Ludwig Schmidt, Dimitris Tsipras, and
+  Adrian Vladu.
+\newblock Towards deep learning models resistant to adversarial attacks.
+\newblock In {\em International Conference on Learning Representations (ICLR)},
+  2018.
+
+\bibitem{malialis2015multiagent}
+Kleanthis Malialis and Daniel Kudenko.
+\newblock Distributed reinforcement learning for network intrusion response.
+\newblock In {\em Adaptive and Intelligent Systems (ICAIS)}, pages 44--55.
+  Springer, 2015.
+
+\bibitem{moustafa2023explainable}
+N.~Moustafa et~al.
+\newblock Explainable intrusion detection for cyber defences in the internet of
+  things: Opportunities and solutions.
+\newblock {\em IEEE Communications Surveys \& Tutorials}, 25(4):1775--1807,
+  2023.
+
+\bibitem{moustafa2015unswnb15}
+Nour Moustafa and Jill Slay.
+\newblock {UNSW-NB15}: A comprehensive data set for network intrusion detection
+  systems.
+\newblock In {\em Proceedings of the Military Communications and Information
+  Systems Conference (MilCIS)}, pages 1--6, 2015.
+
+\bibitem{pinto2017robust_rl}
+Lerrel Pinto, James Davidson, Rahul Sukthankar, and Abhinav Gupta.
+\newblock Robust adversarial reinforcement learning.
+\newblock In {\em Proceedings of the International Conference on Machine
+  Learning (ICML)}, pages 2817--2826, 2017.
+
+\bibitem{qiu2024vaemax}
+Zhiyin Qiu, Ding Zhou, Yahui Zhai, Bo~Liu, Lei He, and Jiuxin Cao.
+\newblock {VAEMax}: Open-set intrusion detection based on {OpenMax} and
+  variational autoencoder.
+\newblock {\em arXiv preprint arXiv:2403.04193}, 2024.
+
+\bibitem{ring2019nids}
+Markus Ring, Sarah Wunderlich, Deniz Scheuring, Dieter Landes, and Andreas
+  Hotho.
+\newblock A survey of network-based intrusion detection data sets.
+\newblock {\em Computers \& Security}, 86:147--167, 2019.
+
+\bibitem{sarhan2021nfuqnids}
+Mohanad Sarhan, Siamak Layeghy, Nour Moustafa, and Marius Portmann.
+\newblock Towards a standard feature set for network intrusion detection system
+  datasets.
+\newblock {\em Mobile Networks and Applications}, 27:357--370, 2022.
+
+\bibitem{schulman2015gae}
+John Schulman, Philipp Moritz, Sergey Levine, Michael Jordan, and Pieter
+  Abbeel.
+\newblock High-dimensional continuous control using generalized advantage
+  estimation.
+\newblock {\em arXiv preprint arXiv:1506.02438}, 2015.
+
+\bibitem{schulman2017ppo}
+John Schulman, Filip Wolski, Prafulla Dhariwal, Alec Radford, and Oleg Klimov.
+\newblock Proximal policy optimization algorithms.
+\newblock {\em arXiv preprint arXiv:1707.06347}, 2017.
+
+\bibitem{sharafaldin2018cicids2018}
+Iman Sharafaldin, Arash Habibi~Lashkari, and Ali~A. Ghorbani.
+\newblock {CSE-CIC-IDS2018} intrusion detection dataset.
+\newblock University of New Brunswick, Canadian Institute for Cybersecurity,
+  2018.
+\newblock \url{https://www.unb.ca/cic/datasets/ids-2018.html}. Accessed
+  2026-03-10.
+
+\bibitem{sharafaldin2018cicids2017}
+Iman Sharafaldin, Arash Habibi~Lashkari, and Ali~A. Ghorbani.
+\newblock Toward generating a new intrusion detection dataset and intrusion
+  traffic characterization.
+\newblock In {\em Proceedings of the 4th International Conference on
+  Information Systems Security and Privacy (ICISSP)}, pages 108--116, 2018.
+
+\bibitem{sinha2018bilevel}
+Ankur Sinha, Pekka Malo, and Kalyanmoy Deb.
+\newblock A review on bilevel optimization: From classical to evolutionary
+  approaches and applications.
+\newblock {\em IEEE Transactions on Evolutionary Computation}, 22(2):276--295,
+  2018.
+
+\bibitem{siriwardhana2025nidd}
+Yushan Siriwardhana et~al.
+\newblock Descriptor: {5G} wireless network intrusion detection dataset
+  ({5G-NIDD}).
+\newblock {\em IEEE Data Descriptions}, 2025.
+
+\bibitem{staudemeyer2019lstm}
+Ralf~C. Staudemeyer and Eric~Rothstein Morris.
+\newblock Understanding {LSTM} -- a tutorial into long short-term memory
+  recurrent neural networks.
+\newblock {\em arXiv preprint arXiv:1909.09586}, 2019.
+
+\bibitem{tavallaee2009nslkdd}
+Mahbod Tavallaee, Ebrahim Bagheri, Wei Lu, and Ali~A. Ghorbani.
+\newblock A detailed analysis of the {KDD CUP 99} data set.
+\newblock In {\em Proceedings of the IEEE Symposium on Computational
+  Intelligence for Security and Defense Applications (CISDA)}, pages 1--6,
+  2009.
+
+\bibitem{vonStackelberg1952}
+Heinrich von Stackelberg.
+\newblock {\em The Theory of the Market Economy}.
+\newblock Oxford University Press, Oxford, UK, 1952.
+
+\bibitem{wang2023robustnessnids}
+Minxiao Wang, Ning Yang, Dulaj~H. Gunasinghe, and Ning Weng.
+\newblock On the robustness of {ML}-based network intrusion detection systems:
+  An adversarial and distribution shift perspective.
+\newblock {\em Computers}, 12(10):209, 2023.
+
+\bibitem{xi2024idsmtran}
+Chiming Xi, Hui Wang, and Xubin Wang.
+\newblock A novel multi-scale network intrusion detection model with
+  transformer.
+\newblock {\em Scientific Reports}, 14:23239, 2024.
+
+\bibitem{xin2025crossdatasettransformer}
+Chaonan Xin and Keqing Xu.
+\newblock Cross-dataset transformer-{IDS} with calibration and {AUC}
+  optimization.
+\newblock {\em Journal of Cyber Security}, 7:483--503, 2025.
+
+\bibitem{xu2024gnnssl}
+Renjie Xu, Guangwei Wu, Weiping Wang, Xing Gao, An~He, and Zhengpeng Zhang.
+\newblock Applying self-supervised learning to network intrusion detection for
+  network flows with graph neural network.
+\newblock {\em Computer Networks}, 2024.
+
+\bibitem{yuan2019adv_survey}
+Xiaoyong Yuan, Pan He, Qile Zhu, and Xiaolin Li.
+\newblock Adversarial examples: Attacks and defenses for deep learning.
+\newblock {\em IEEE Transactions on Neural Networks and Learning Systems},
+  30(9):2805--2824, 2019.
+
+\bibitem{zhang2019trades}
+Hongyang Zhang, Yaodong Yu, Jiantao Jiao, Eric Xing, Laurent El~Ghaoui, and
+  Michael Jordan.
+\newblock Theoretically principled trade-off between robustness and accuracy.
+\newblock In {\em Proceedings of the International Conference on Machine
+  Learning (ICML)}, pages 7472--7482, 2019.
+
+\end{thebibliography}

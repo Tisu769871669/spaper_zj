@@ -43,11 +43,12 @@ def evaluate_defender_model(model_path, X_test, y_test):
     model.eval()
 
     predictions = []
+    batch_size = 1024
     with torch.no_grad():
-        for i in range(len(X_test)):
-            state = torch.FloatTensor(X_test[i]).unsqueeze(0).to(Config.DEVICE)
-            action = torch.argmax(model(state), dim=1).item()
-            predictions.append(1 if action >= 5 else 0)
+        for i in range(0, len(X_test), batch_size):
+            batch_x = torch.FloatTensor(X_test[i:i + batch_size]).to(Config.DEVICE)
+            actions = torch.argmax(model(batch_x), dim=1).cpu().numpy()
+            predictions.extend((actions >= 5).astype(int).tolist())
 
     return compute_metrics(y_test, np.array(predictions))
 
@@ -200,6 +201,7 @@ def main():
         "Vanilla PPO": ("VanillaPPO", "model", "rl"),
         "MARL": ("MARL", "defender", "rl"),
         "LSTM-IDS": ("LSTM", "model", "lstm"),
+        "Transformer-IDS": ("TransformerIDS", "model", "biat_fttransformer"),
         "BiAT-MLP": ("BiATMLP", "model", "biat_mlp"),
         "BiAT-FTTransformer": ("BiATFTTransformer", "model", "biat_fttransformer"),
         "HGBT-IDS": ("HGBT", "model", "hgbt"),
@@ -207,28 +209,40 @@ def main():
         "LightGBM-IDS": ("LightGBM", "model", "lgbm"),
     }
 
+    import time
     detailed_rows = []
+    total_jobs = sum(
+        1 for name, (_, _, fam) in model_specs.items()
+        for s in Config.SEEDS
+        if fam not in ("hgbt", "xgb", "lgbm")
+    ) + len([f for _, (_, _, f) in model_specs.items() if f in ("hgbt","xgb","lgbm")]) * len(Config.SEEDS)
+    job_idx = 0
+    t_global = time.time()
 
     for model_name, (model_type, model_file, family) in model_specs.items():
+        print(f"\n[{model_name}]", flush=True)
         for seed in Config.SEEDS:
+            job_idx += 1
+            t_job = time.time()
+            print(f"  ({job_idx}/{total_jobs}) seed={seed} ...", end=" ", flush=True)
             if family == "hgbt":
                 metrics = evaluate_hgbt_model(X_train, y_train, X_test, y_test, seed)
             elif family == "xgb":
                 try:
                     metrics = evaluate_xgboost_model(X_train, y_train, X_test, y_test, seed)
                 except RuntimeError as exc:
-                    print(f"[Skip] {model_name} seed={seed}: {exc}")
+                    print(f"[Skip] {exc}", flush=True)
                     continue
             elif family == "lgbm":
                 try:
                     metrics = evaluate_lightgbm_model(X_train, y_train, X_test, y_test, seed)
                 except RuntimeError as exc:
-                    print(f"[Skip] {model_name} seed={seed}: {exc}")
+                    print(f"[Skip] {exc}", flush=True)
                     continue
             else:
                 model_path = Config.find_model_file(model_type, seed, model_file)
                 if not model_path.exists():
-                    print(f"[Skip] {model_name} seed={seed}: {model_path}")
+                    print(f"[Skip] not found", flush=True)
                     continue
 
                 if family == "lstm":
@@ -240,13 +254,15 @@ def main():
                 else:
                     metrics = evaluate_defender_model(model_path, X_test, y_test)
 
+            elapsed_job = time.time() - t_job
+            elapsed_total = time.time() - t_global
             row = {"Model": model_name, "Seed": seed}
             row.update(metrics)
             detailed_rows.append(row)
             print(
-                f"{model_name:<15} seed={seed:<5} "
-                f"Recall={metrics['Recall']:.4f} Precision={metrics['Precision']:.4f} "
-                f"F1={metrics['F1']:.4f} FPR={metrics['FPR']:.4f}"
+                f"F1={metrics['F1']:.4f}  FPR={metrics['FPR']:.4f}  "
+                f"({elapsed_job:.1f}s, total {elapsed_total:.0f}s)",
+                flush=True,
             )
 
     detailed_df = pd.DataFrame(detailed_rows)

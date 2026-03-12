@@ -428,6 +428,156 @@ class CICIoT2023Loader(BaseTabularLoader):
         return df[self.label_col].astype(int).values
 
 
+class CSECICIDS2018Loader(BaseTabularLoader):
+    """
+    Loader for CSE-CIC-IDS2018 dataset.
+
+    Expected directory layout (data/CSE_CIC_IDS2018/):
+        02-14-2018.csv
+        02-15-2018.csv
+        ...  (any *.csv files in the directory)
+
+    Column format matches CIC-IDS2017: numeric flow features + 'Label' column.
+    Benign rows are labelled 'Benign'; attack rows have various attack-type strings.
+
+    Data source: https://www.unb.ca/cic/datasets/ids-2018.html
+                 AWS S3 bucket s3://cse-cic-ids2018/
+    """
+
+    def __init__(self, root_dir=None):
+        root = root_dir or Config.DATASET_PATH
+        super().__init__(train_path=root, test_path=root)
+        self.root_dir = str(root)
+        self.label_col = "Label"
+        self.drop_cols = []
+        self._cached_split = None
+
+    def _discover_csv_files(self):
+        if not os.path.exists(self.root_dir):
+            return []
+        files = sorted(
+            str(p)
+            for p in Path(self.root_dir).glob("*.csv")
+        )
+        return files
+
+    def has_real_data(self):
+        return len(self._discover_csv_files()) > 0
+
+    def _load_all(self) -> pd.DataFrame:
+        files = self._discover_csv_files()
+        frames = []
+        for path in files:
+            try:
+                df = pd.read_csv(path, low_memory=False)
+                df.columns = [str(c).strip() for c in df.columns]
+                frames.append(df)
+            except Exception as exc:
+                print(f"  [CIC-IDS2018] Skipping {path}: {exc}")
+        if not frames:
+            raise FileNotFoundError(f"No readable CSV files in {self.root_dir}")
+        return pd.concat(frames, ignore_index=True)
+
+    def _load_sampled(self, max_total: int) -> pd.DataFrame:
+        files = self._discover_csv_files()
+        if not files:
+            raise FileNotFoundError(f"No readable CSV files in {self.root_dir}")
+
+        per_file_target = max(1, int(np.ceil(max_total / len(files))))
+        frames = []
+        for path in files:
+            try:
+                df = pd.read_csv(path, low_memory=False)
+                df.columns = [str(c).strip() for c in df.columns]
+                if len(df) > per_file_target:
+                    labels = self.build_binary_labels(df)
+                    df, _ = train_test_split(
+                        df,
+                        train_size=per_file_target,
+                        random_state=Config.DEFAULT_SEED,
+                        stratify=labels,
+                    )
+                frames.append(df.reset_index(drop=True))
+            except Exception as exc:
+                print(f"  [CIC-IDS2018] Skipping {path}: {exc}")
+
+        if not frames:
+            raise FileNotFoundError(f"No readable CSV files in {self.root_dir}")
+
+        df = pd.concat(frames, ignore_index=True)
+        if len(df) > max_total:
+            labels = self.build_binary_labels(df)
+            df, _ = train_test_split(
+                df,
+                train_size=max_total,
+                random_state=Config.DEFAULT_SEED,
+                stratify=labels,
+            )
+            df = df.reset_index(drop=True)
+        return df
+
+    def _get_split(self):
+        if self._cached_split is not None:
+            return self._cached_split
+
+        max_total = (Config.MAX_TRAIN_SAMPLES or 300000) + (Config.MAX_TEST_SAMPLES or 150000)
+        df = self._load_sampled(max_total)
+        df = df.replace([np.inf, -np.inf], np.nan)
+        numeric_cols = [c for c in df.columns if c != self.label_col]
+        # CIC-IDS2018 CSVs contain mixed string/numeric columns in some files.
+        # Coerce all feature columns to numeric before imputation and splitting.
+        for col in numeric_cols:
+            df[col] = pd.to_numeric(df[col], errors="coerce")
+        for col in numeric_cols:
+            if df[col].isna().any():
+                med = df[col].median()
+                df[col] = df[col].fillna(0 if pd.isna(med) else med)
+
+        labels = self.build_binary_labels(df)
+        train_df, test_df = train_test_split(
+            df,
+            test_size=Config.TEST_SIZE,
+            random_state=Config.DEFAULT_SEED,
+            stratify=labels,
+        )
+        self._cached_split = (
+            train_df.reset_index(drop=True),
+            test_df.reset_index(drop=True),
+        )
+        return self._cached_split
+
+    def _read_split(self, path):
+        raise NotImplementedError("CSECICIDS2018 uses directory-based loading.")
+
+    def load_data(self, mode="train"):
+        if not self.has_real_data():
+            print(f"[CIC-IDS2018] No CSV files found in: {self.root_dir}")
+            return self.generate_synthetic_data()
+
+        print(f"Loading CSE-CIC-IDS2018 ({mode}) from {self.root_dir} ...")
+        train_df, test_df = self._get_split()
+        df = train_df if mode == "train" else test_df
+        if mode == "test" and not self._is_fitted():
+            self.preprocess(train_df, fit=True)
+        return self.preprocess(df, fit=(mode == "train"))
+
+    def preprocess(self, df, fit=True):
+        df = df.copy()
+        df = df.replace([np.inf, -np.inf], np.nan)
+        for col in df.columns:
+            if col == self.label_col:
+                continue
+            df[col] = pd.to_numeric(df[col], errors="coerce")
+            if df[col].isna().any():
+                med = df[col].median()
+                df[col] = df[col].fillna(0 if pd.isna(med) else med)
+        return super().preprocess(df, fit=fit)
+
+    def build_binary_labels(self, df):
+        labels = df[self.label_col].astype(str).str.strip().str.upper()
+        return (labels != "BENIGN").astype(int).values
+
+
 def build_data_loader(dataset_name=None):
     dataset_key = (dataset_name or Config.DATASET_NAME).lower()
     if dataset_key == "nsl-kdd":
@@ -442,4 +592,6 @@ def build_data_loader(dataset_name=None):
         return CICIoT2023Loader()
     if dataset_key == "ciciot2023-grouped":
         return CICIoT2023Loader()
+    if dataset_key == "cse-cic-ids2018":
+        return CSECICIDS2018Loader()
     raise ValueError(f"Unsupported dataset loader: {dataset_key}")

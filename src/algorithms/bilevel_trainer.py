@@ -80,6 +80,19 @@ class BiLevelTrainer:
         self.inner_loop_steps = config.INNER_LOOP_STEPS if hasattr(config, 'INNER_LOOP_STEPS') else 5
         self.kl_threshold = config.KL_THRESHOLD if hasattr(config, 'KL_THRESHOLD') else 0.01
         
+        # ==================== 内层循环稳定化参数 ====================
+        # 攻击者熵正则化退火调度
+        self.entropy_coeff = getattr(config, 'ENTROPY_COEFF_INIT', 0.05)
+        self.entropy_coeff_min = getattr(config, 'ENTROPY_COEFF_MIN', 0.001)
+        self.entropy_decay = getattr(config, 'ENTROPY_DECAY', 0.995)
+        # 攻击者热身调度
+        self.warmup_ratio = getattr(config, 'WARMUP_RATIO', 0.2)
+        self.warmup_kinner = getattr(config, 'WARMUP_KINNER', 1)
+        self.total_episodes = getattr(config, 'RL_EPISODES', 100)
+        
+        # 将初始熵系数应用到攻击者 PPO
+        self.ppo_attacker.set_entropy_coeff(self.entropy_coeff)
+        
         # Metrics tracking
         self.global_step = 0
         self.inner_loop_converged_count = 0
@@ -191,7 +204,10 @@ class BiLevelTrainer:
         inner_rewards = []
         converged_at_step = None
         
-        for inner_step in range(self.inner_loop_steps):
+        # 根据热身调度确定当前 episode 的实际内层步数
+        effective_steps = self._get_effective_inner_steps(episode)
+        
+        for inner_step in range(effective_steps):
             # Collect trajectory
             reward, info = self.collect_trajectory(agent_type="attacker")
             inner_rewards.append(reward)
@@ -210,14 +226,23 @@ class BiLevelTrainer:
         # Log metrics
         avg_inner_reward = np.mean(inner_rewards) if inner_rewards else 0.0
         
+        # 计算攻击者当前策略熵（诊断指标）
+        attacker_entropy = self._compute_attacker_entropy()
+        
         if self.logger:
             self.logger.add_scalar('InnerLoop/AvgReward', avg_inner_reward, episode)
-            self.logger.add_scalar('InnerLoop/ConvergedAt', converged_at_step or self.inner_loop_steps, episode)
+            self.logger.add_scalar('InnerLoop/ConvergedAt', converged_at_step or effective_steps, episode)
+            self.logger.add_scalar('InnerLoop/AttackerEntropy', attacker_entropy, episode)
+            self.logger.add_scalar('InnerLoop/EntropyCoeff', self.entropy_coeff, episode)
+            self.logger.add_scalar('InnerLoop/EffectiveKInner', effective_steps, episode)
             
         return {
             'inner_avg_reward': avg_inner_reward,
-            'inner_steps': converged_at_step or self.inner_loop_steps,
-            'inner_converged': converged_at_step is not None
+            'inner_steps': converged_at_step or effective_steps,
+            'inner_converged': converged_at_step is not None,
+            'attacker_entropy': attacker_entropy,
+            'entropy_coeff': self.entropy_coeff,
+            'effective_k_inner': effective_steps
         }
     
     def train_outer_loop(self, episode: int) -> Dict[str, float]:
@@ -288,6 +313,9 @@ class BiLevelTrainer:
         # Combine metrics
         metrics = {**inner_metrics, **outer_metrics}
         
+        # 更新熵正则化退火调度
+        self._update_entropy_schedule(episode)
+        
         # Log combined metrics
         if self.logger:
             self.logger.add_scalar('Training/InnerOuterRewardRatio', 
@@ -313,3 +341,65 @@ class BiLevelTrainer:
         }, os.path.join(save_dir, f'checkpoint_ep{episode}.pth'))
         
         print(f"Checkpoint saved at episode {episode}")
+    
+    # ==================== 内层循环稳定化方法 ====================
+    
+    def _get_effective_inner_steps(self, episode: int) -> int:
+        """
+        攻击者热身调度：训练初期限制内层步数，防止攻击者过度优化。
+        
+        调度策略：
+            - 前 warmup_ratio 的 episode: K_inner = warmup_kinner (=1)
+            - 之后线性过渡到配置的 inner_loop_steps
+        
+        Args:
+            episode: 当前 episode 编号
+            
+        Returns:
+            当前 episode 应用的内层循环步数
+        """
+        warmup_episodes = int(self.total_episodes * self.warmup_ratio)
+        
+        if episode < warmup_episodes:
+            # 热身期：使用较小的 K_inner
+            return self.warmup_kinner
+        
+        # 热身后：线性过渡到完整的 inner_loop_steps
+        progress = min(1.0, (episode - warmup_episodes) / max(1, warmup_episodes))
+        effective = self.warmup_kinner + int(progress * (self.inner_loop_steps - self.warmup_kinner))
+        return min(effective, self.inner_loop_steps)
+    
+    def _update_entropy_schedule(self, episode: int):
+        """
+        熵正则化退火调度：每个 episode 后指数衰减攻击者熵系数。
+        
+        目的：
+            - 训练初期：高熵系数鼓励探索，防止攻击者策略过早坍缩
+            - 训练后期：低熵系数允许攻击者收敛到确定性策略
+        """
+        self.entropy_coeff = max(
+            self.entropy_coeff_min,
+            self.entropy_coeff * self.entropy_decay
+        )
+        # 同步更新攻击者 PPO 的熵系数
+        self.ppo_attacker.set_entropy_coeff(self.entropy_coeff)
+    
+    def _compute_attacker_entropy(self) -> float:
+        """
+        计算攻击者当前策略的平均熵（诊断指标）。
+        
+        低熵 → 策略坍缩（可能过度优化）
+        高熵 → 策略随机（未学到有效攻击）
+        
+        Returns:
+            攻击者策略的平均熵值
+        """
+        if len(self.ppo_attacker.buffer.states) < 5:
+            return 0.0
+        
+        with torch.no_grad():
+            states = torch.stack(self.ppo_attacker.buffer.states[-5:])
+            actions = torch.stack(self.ppo_attacker.buffer.actions[-5:])
+            _, _, entropy = self.attacker.evaluate(states, actions)
+            return entropy.mean().item()
+

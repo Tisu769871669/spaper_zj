@@ -21,6 +21,7 @@ class Config:
     UNSW_TEST_DATA = DATA_DIR / "UNSW_NB15_testing-set.csv"
     CIC_IDS2017_DIR = DATA_DIR / "CIC_IDS2017_machine_learning"
     CICIOT2023_DIR = DATA_DIR / "CICIoT2023"
+    CSE_CIC_IDS2018_DIR = DATA_DIR / "CSE_CIC_IDS2018"
     
     # 输出路径
     OUTPUT_DIR = PROJECT_ROOT / "outputs"
@@ -159,11 +160,33 @@ class Config:
                 "fn_att": 2.0,
             },
         },
+        "cse-cic-ids2018": {
+            "train_path": CSE_CIC_IDS2018_DIR,
+            "test_path": CSE_CIC_IDS2018_DIR,
+            "state_dim": 78,
+            "inner_loop_steps": 1,
+            "attacker_noise_std": 0.02,
+            "categorical_feature_indices": [],
+            "max_train_samples": 300000,
+            "max_test_samples": 150000,
+            "split_mode": "random_stratified",
+            "test_size": 0.2,
+            "reward_profile": {
+                "tp_def": 1.5,
+                "tn_def": 1.0,
+                "fp_def": -2.5,
+                "fn_def": -2.0,
+                "tp_att": -1.5,
+                "tn_att": 0.0,
+                "fp_att": 2.5,
+                "fn_att": 2.0,
+            },
+        },
     }
     DATASET_NAME = "nsl-kdd"
 
     # 随机种子列表(用于多次实验)
-    SEEDS = [42, 3407,8888,123]
+    SEEDS = [42, 3407, 8888, 123, 2026]
     DEFAULT_SEED = 42
     
     # 训练参数
@@ -248,6 +271,15 @@ class Config:
     MAX_TEST_SAMPLES = DATASET_PROFILES[DATASET_NAME].get("max_test_samples")
     SPLIT_MODE = DATASET_PROFILES[DATASET_NAME].get("split_mode", "official")
     TEST_SIZE = DATASET_PROFILES[DATASET_NAME].get("test_size", 0.2)
+    
+    # ==================== 内层循环稳定化参数 ====================
+    # 攻击者熵正则化系数（鼓励探索，防止策略坍缩）
+    ENTROPY_COEFF_INIT = 0.05       # 初始熵系数
+    ENTROPY_COEFF_MIN = 0.001       # 最小熵系数
+    ENTROPY_DECAY = 0.995           # 每 episode 的退火乘数
+    # 攻击者热身调度（训练初期限制内层步数）
+    WARMUP_RATIO = 0.2              # 前 20% 的 episode 使用 K_inner=1
+    WARMUP_KINNER = 1               # 热身期间的内层步数
     
     # ==================== 设备配置 ====================
     DEVICE = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')

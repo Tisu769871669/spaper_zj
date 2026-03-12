@@ -24,15 +24,22 @@ class RolloutBuffer:
 class PPO:
     """
     PPO (Proximal Policy Optimization) 算法实现。
+    
+    支持可配置的熵系数，用于内层循环稳定化。
     """
-    def __init__(self, policy_net, optimizer, lr, gamma, eps_clip, k_epochs):
+    def __init__(self, policy_net, optimizer, lr, gamma, eps_clip, k_epochs, entropy_coeff=0.01):
         self.policy_net = policy_net
-        self.optimizer = optimizer # 这里的 optimizer 应该由外部传入，或者在内部初始化
+        self.optimizer = optimizer
         self.gamma = gamma
         self.eps_clip = eps_clip
         self.k_epochs = k_epochs
+        self.entropy_coeff = entropy_coeff  # 可动态调整的熵系数
         self.buffer = RolloutBuffer()
         self.mse_loss = nn.MSELoss()
+    
+    def set_entropy_coeff(self, coeff: float):
+        """动态设置熵系数（用于内层循环退火调度）。"""
+        self.entropy_coeff = coeff
 
     def update(self):
         """
@@ -70,8 +77,8 @@ class PPO:
             surr1 = ratios * advantages
             surr2 = torch.clamp(ratios, 1-self.eps_clip, 1+self.eps_clip) * advantages
             
-            # 最终 Loss = -min(surr1, surr2) + 0.5 * MSE(value, reward) - 0.01 * entropy
-            loss = -torch.min(surr1, surr2) + 0.5 * self.mse_loss(state_values, rewards) - 0.01 * dist_entropy
+            # 最终 Loss = -min(surr1, surr2) + 0.5 * MSE(value, reward) - entropy_coeff * entropy
+            loss = -torch.min(surr1, surr2) + 0.5 * self.mse_loss(state_values, rewards) - self.entropy_coeff * dist_entropy
             
             # 反向传播
             self.optimizer.zero_grad()

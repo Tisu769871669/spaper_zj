@@ -216,22 +216,27 @@ class BiLevelFTTransformerTrainer:
         return compute_metrics(self.y_test, y_pred)
 
     def train(self, epochs: int = 10, batch_size: int = 512) -> Dict[str, object]:
+        import time
         best_f1 = -1.0
         best_state = None
         history = []
+        t0 = time.time()
         for epoch in range(1, epochs + 1):
+            t_ep = time.time()
             train_stats = self.train_epoch(batch_size)
             clean_stats = self.evaluate(use_adversarial=False)
+            elapsed_ep = time.time() - t_ep
+            elapsed_total = time.time() - t0
             history.append({"epoch": epoch, **train_stats, **{f"clean_{k}": v for k, v in clean_stats.items()}})
             if clean_stats["F1"] > best_f1:
                 best_f1 = clean_stats["F1"]
                 best_state = {k: v.detach().cpu() for k, v in self.model.state_dict().items()}
-            if epoch == 1 or epoch % 5 == 0 or epoch == epochs:
-                print(
-                    f"Epoch {epoch:02d}/{epochs} "
-                    f"loss={train_stats['total_loss']:.4f} "
-                    f"F1={clean_stats['F1']:.4f} FPR={clean_stats['FPR']:.4f}"
-                )
+            print(
+                f"Epoch {epoch:02d}/{epochs}  loss={train_stats['total_loss']:.4f}  "
+                f"F1={clean_stats['F1']:.4f}  FPR={clean_stats['FPR']:.4f}  "
+                f"ep={elapsed_ep:.0f}s  total={elapsed_total:.0f}s",
+                flush=True,
+            )
         if best_state is not None:
             self.model.load_state_dict(best_state)
         return {
